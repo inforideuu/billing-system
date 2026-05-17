@@ -162,7 +162,7 @@ B. DEPLOY LIVE PERMANENTLY (FIREBASE CLOUD FUNCTIONS):
   * The helper compiles all production static bundles and runs `firebase deploy` 
     to upload the app permanently.
   * Once uploaded, the live project is accessible at your public URL:
-    `https://annamalai-a435c.web.app`
+    `https://billing-system-d9295.web.app`
 
 ========================================================================
             Zenelait Infotech Engineering Team • 2026

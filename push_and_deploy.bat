@@ -11,7 +11,7 @@ echo  This utility will help you push your error-free, responsive project
 echo  to GitHub and deploy it live permanently on Firebase Hosting!
 echo.
 echo  Your GitHub:   https://github.com/Annamalai2382
-echo  Firebase ID:   annamalai-a435c (Live Web URL: https://annamalai-a435c.web.app)
+echo  Firebase ID:   billing-system-d9295 (Live Web URL: https://billing-system-d9295.web.app)
 echo.
 echo =========================================================================
 echo  Please select an operation:
@@ -78,7 +78,7 @@ if %errorlevel% neq 0 (
     goto end
 )
 echo.
-echo  Deploying functions and hosting to Firebase Project "annamalai-a435c"...
+echo  Deploying functions and hosting to Firebase Project "billing-system-d9295"...
 firebase deploy
 if %errorlevel% neq 0 (
     echo.
@@ -87,7 +87,7 @@ if %errorlevel% neq 0 (
 ) else (
     echo.
     echo  [SUCCESS] Application is now live permanently!
-    echo  Visit your website: https://annamalai-a435c.web.app
+    echo  Visit your website: https://billing-system-d9295.web.app
 )
 echo.
 pause
