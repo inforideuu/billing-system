@@ -19,40 +19,44 @@ if __name__ == "__main__":
     from django.contrib.auth.models import User
     from core.models import Business, UserProfile
     
-    if not User.objects.filter(is_superuser=True).exists():
-        print("No superuser found in database. Initializing default cloud admin account...")
-        
-        # Create default Business
-        biz, created = Business.objects.get_or_create(
-            name="Zenelait Infotech",
-            defaults={
-                'owner_name': 'Annamalai',
-                'address': 'Chennai, Tamil Nadu',
-                'phone': '9884264816',
-                'is_subscription_active': True
-            }
-        )
-        
-        # Create superuser admin account
+    # Ensure default Business exists
+    biz, created = Business.objects.get_or_create(
+        name="Zenelait Infotech",
+        defaults={
+            'owner_name': 'Annamalai',
+            'address': 'Chennai, Tamil Nadu',
+            'phone': '9884264816',
+            'is_subscription_active': True
+        }
+    )
+    
+    # Ensure super admin 'demo_user' exists in production database
+    if not User.objects.filter(username='demo_user').exists():
+        print("Initializing super admin 'demo_user'...")
         user = User.objects.create_superuser(
-            username='admin',
-            email='admin@zenelait.com',
-            password='adminpassword123'
+            username='demo_user',
+            email='demo_user@zenelait.com',
+            password='demo_password'
         )
-        
-        # Associate user with business
         profile = user.profile
         profile.role = 'SUPER_ADMIN'
         profile.business = biz
         profile.save()
+        print("Super admin 'demo_user' created successfully!")
         
-        print("="*50)
-        print("  [SUCCESS] DEFAULT ADMIN LOGIN CREATED SUCCESSFULLY!")
-        print("  Username: admin")
-        print("  Password: adminpassword123")
-        print("="*50)
-    else:
-        print("Superuser accounts already exist. Skipping account creation.")
+    # Ensure super admin 'admin' exists in production database
+    if not User.objects.filter(username='admin').exists():
+        print("Initializing super admin 'admin'...")
+        user = User.objects.create_superuser(
+            username='admin',
+            email='admin@zenelait.com',
+            password='admin@123'
+        )
+        profile = user.profile
+        profile.role = 'SUPER_ADMIN'
+        profile.business = biz
+        profile.save()
+        print("Super admin 'admin' created successfully!")
 
     from retail_billing.wsgi import application
     

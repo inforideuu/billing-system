@@ -42,7 +42,11 @@
                     </button>
                     <a href="/dashboard/" class="flex flex-col items-center group text-center py-2">
                         <div class="bg-white p-2 rounded-xl shadow-sm group-hover:shadow-md border border-slate-100 transition-all w-24 h-14 flex items-center justify-center overflow-hidden">
+                            {% if request.user.profile.business.logo %}
+                            <img src="{{ request.user.profile.business.logo.url }}" alt="{{ request.user.profile.business.name }}" class="w-full h-auto max-h-full object-contain transform group-hover:scale-105 transition-transform duration-300">
+                            {% else %}
                             <img src="{% static 'images/logo.svg' %}" alt="Zenelait Infotech" class="w-full h-auto transform group-hover:scale-105 transition-transform duration-300">
+                            {% endif %}
                         </div>
                     </a>
                 </div>

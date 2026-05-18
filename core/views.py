@@ -306,6 +306,8 @@ def add_business_admin(request):
         phone = request.POST.get('phone')
         email = request.POST.get('email')
         gstin = request.POST.get('gstin')
+        address = request.POST.get('address')
+        logo = request.FILES.get('logo')
         
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -315,7 +317,7 @@ def add_business_admin(request):
             return redirect('super_admin_dashboard')
             
         business = Business.objects.create(
-            name=b_name, owner_name=owner_name, phone=phone, email=email, gstin=gstin
+            name=b_name, owner_name=owner_name, phone=phone, email=email, gstin=gstin, address=address, logo=logo
         )
         user = User.objects.create_user(username=username, password=password, email=email)
         
@@ -325,6 +327,52 @@ def add_business_admin(request):
         profile.save()
         
         messages.success(request, f"Successfully created business '{b_name}' and set up Admin '{username}'!")
+    return redirect('super_admin_dashboard')
+
+@login_required(login_url='/accounts/login/')
+@role_required(['SUPER_ADMIN'])
+def edit_business_admin(request, business_id):
+    business = get_object_or_404(Business, id=business_id)
+    if request.method == 'POST':
+        try:
+            business.name = request.POST.get('business_name')
+            business.owner_name = request.POST.get('owner_name')
+            business.phone = request.POST.get('phone')
+            business.email = request.POST.get('email')
+            business.gstin = request.POST.get('gstin')
+            business.address = request.POST.get('address')
+            
+            logo = request.FILES.get('logo')
+            if logo:
+                business.logo = logo
+                
+            business.save()
+            messages.success(request, f"Business details updated successfully for '{business.name}'!")
+        except Exception as e:
+            messages.error(request, f"Error updating business: {str(e)}")
+            
+    return redirect('super_admin_dashboard')
+
+@login_required(login_url='/accounts/login/')
+@role_required(['SUPER_ADMIN'])
+def delete_business(request, business_id):
+    business = get_object_or_404(Business, id=business_id)
+    name = business.name
+    try:
+        # Delete invoices and their items first to avoid models.PROTECT violations on InvoiceItem.product
+        Invoice.objects.filter(business=business).delete()
+        
+        # Delete associated Django User objects first
+        users_to_delete = User.objects.filter(profile__business=business)
+        users_to_delete.delete()
+        
+        # Cascade delete the Business object
+        business.delete()
+        
+        messages.success(request, f"Business '{name}' and all its associated staff, inventory, and invoice data have been successfully deleted.")
+    except Exception as e:
+        messages.error(request, f"Error deleting business '{name}': {str(e)}")
+        
     return redirect('super_admin_dashboard')
 
 # === SHOP ADMIN CASHIER MANAGEMENT ===

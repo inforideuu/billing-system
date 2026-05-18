@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Tax Invoice #{{ invoice.id }} | Zenelait Infotech{% endblock %}
+{% block title %}Tax Invoice #{{ invoice.id }} | {{ invoice.business.name|default:"Zenelait Infotech" }}{% endblock %}
 {% block page_title %}Tax Invoice{% endblock %}
 
 {% block content %}
@@ -43,11 +43,16 @@
                         class="px-3 py-1 bg-red-50 text-red-600 text-xs font-bold uppercase tracking-widest rounded-full border border-red-100 print:border-slate-400 print:text-black">Tax
                         Invoice</span>
                     <div class="h-14 flex items-center mt-2 overflow-hidden">
+                        {% if invoice.business.logo %}
+                        <img src="{{ invoice.business.logo.url }}" alt="{{ invoice.business.name }}" class="h-full w-auto">
+                        {% else %}
                         <img src="{% static 'images/logo.svg' %}" alt="Zenelait Infotech" class="h-full w-auto">
+                        {% endif %}
                     </div>
-                    <p class="text-slate-500 text-sm mt-1">123 Business Avenue, Tech Park, India</p>
+                    <p class="text-slate-900 font-bold text-base mt-2">{{ invoice.business.name|default:"Zenelait Infotech" }}</p>
+                    <p class="text-slate-500 text-sm mt-0.5">{{ invoice.business.address|default:"123 Business Avenue, Tech Park, India" }}</p>
                     <p class="text-slate-500 text-xs font-medium">GSTIN: <span
-                            class="text-slate-700 font-bold uppercase">33AABCU9603R1ZX</span></p>
+                            class="text-slate-700 font-bold uppercase">{{ invoice.business.gstin|default:"33AABCU9603R1ZX" }}</span></p>
                 </div>
                 <div class="text-left md:text-right">
                     <p class="text-xs font-semibold uppercase text-slate-400 tracking-wider">Invoice Number</p>

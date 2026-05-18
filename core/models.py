@@ -10,6 +10,7 @@ class Business(models.Model):
     phone = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     gstin = models.CharField(max_length=15, blank=True, null=True, help_text="GST Identification Number")
+    logo = models.ImageField(upload_to='business_logos/', null=True, blank=True)
     is_subscription_active = models.BooleanField(default=True)
     subscription_end_date = models.DateTimeField(null=True, blank=True)
     festival_offer_enabled = models.BooleanField(default=False, help_text="Global toggle for Festival Offers")

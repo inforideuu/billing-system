@@ -87,9 +87,15 @@
                 <tr class="hover:bg-indigo-50/20 transition-colors group">
                     <td class="py-4 px-6">
                         <div class="flex items-center gap-3">
+                            {% if biz.logo %}
+                            <div class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-sm border border-slate-200 bg-white">
+                                <img src="{{ biz.logo.url }}" alt="{{ biz.name }}" class="w-full h-full object-contain p-1">
+                            </div>
+                            {% else %}
                             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white font-bold flex items-center justify-center text-lg shadow-sm">
                                 {{ biz.name|slice:":1"|upper }}
                             </div>
+                            {% endif %}
                             <div>
                                 <h4 class="font-bold text-slate-800 leading-tight">{{ biz.name }}</h4>
                                 <span class="text-xs text-slate-400">GSTIN: {{ biz.gstin|default:"N/A" }}</span>
@@ -119,15 +125,26 @@
                             <span class="text-xs text-slate-400 font-medium">{{ biz.total_invoices }} Invoices</span>
                         </div>
                     </td>
-                    <td class="py-4 px-6 text-center">
-                        <a href="{% url 'toggle_subscription' biz.id %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors
-                            {% if biz.is_subscription_active %}
-                            bg-red-50 text-red-600 hover:bg-red-100
-                            {% else %}
-                            bg-green-50 text-green-600 hover:bg-green-100
-                            {% endif %}">
-                            <i class="fas fa-power-off"></i> {% if biz.is_subscription_active %}Deactivate{% else %}Activate{% endif %}
-                        </a>
+                    <td class="py-4 px-6">
+                        <div class="flex items-center justify-center gap-2">
+                            <a href="{% url 'toggle_subscription' biz.id %}" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-semibold text-xs transition-colors
+                                {% if biz.is_subscription_active %}
+                                bg-amber-50 text-amber-600 hover:bg-amber-100
+                                {% else %}
+                                bg-emerald-50 text-emerald-600 hover:bg-emerald-100
+                                {% endif %}" title="Toggle License">
+                                <i class="fas fa-power-off"></i> {% if biz.is_subscription_active %}Deactivate{% else %}Activate{% endif %}
+                            </a>
+                            <button onclick="openEditModal('{{ biz.id }}', '{{ biz.name|escapejs }}', '{{ biz.owner_name|escapejs }}', '{{ biz.gstin|default:''|escapejs }}', '{{ biz.phone|default:''|escapejs }}', '{{ biz.email|default:''|escapejs }}', '{{ biz.address|default:''|escapejs }}', '{% if biz.logo %}{{ biz.logo.url|escapejs }}{% endif %}')" 
+                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-semibold text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Edit Business">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <a href="{% url 'delete_business' biz.id %}" 
+                               onclick="return confirm('WARNING: Are you absolutely sure you want to delete \'{{ biz.name|escapejs }}\'? This will permanently erase ALL invoices, products, categories, staff accounts, and transactions linked to this shop!')"
+                               class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-semibold text-xs bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors" title="Delete Business">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
@@ -153,7 +170,7 @@
             </button>
         </div>
         
-        <form action="{% url 'add_business_admin' %}" method="POST" class="space-y-4">
+        <form action="{% url 'add_business_admin' %}" method="POST" enctype="multipart/form-data" class="space-y-4">
             {% csrf_token %}
             
             <div class="grid grid-cols-2 gap-4">
@@ -176,6 +193,16 @@
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Phone</label>
                     <input type="text" name="phone" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
                 </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Business Address</label>
+                <textarea name="address" rows="2" placeholder="e.g. 123 Main St, Suite 400" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Business Logo</label>
+                <input type="file" name="logo" accept="image/*" class="w-full border border-slate-200 rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-colors cursor-pointer">
             </div>
 
             <hr class="border-slate-100 my-2">
@@ -206,6 +233,72 @@
     </div>
 </div>
 
+<!-- Edit Business Modal -->
+<div id="editBusinessModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+    <div class="bg-white w-full max-w-xl rounded-3xl p-6 animate-slide-up m-4">
+        <div class="flex items-center justify-between mb-6 border-b pb-3">
+            <h3 class="text-xl font-extrabold text-slate-800">Edit Business Details</h3>
+            <button onclick="toggleModal('editBusinessModal')" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <form id="editBusinessForm" action="" method="POST" enctype="multipart/form-data" class="space-y-4">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Business Name</label>
+                    <input type="text" id="edit_business_name" name="business_name" required class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Owner Name</label>
+                    <input type="text" id="edit_owner_name" name="owner_name" required class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">GSTIN</label>
+                    <input type="text" id="edit_gstin" name="gstin" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Phone</label>
+                    <input type="text" id="edit_phone" name="phone" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Business Address</label>
+                <textarea id="edit_address" name="address" rows="2" placeholder="e.g. 123 Main St, Suite 400" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 items-end">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Business Logo</label>
+                    <input type="file" name="logo" accept="image/*" class="w-full border border-slate-200 rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-colors cursor-pointer">
+                </div>
+                <div class="flex items-center gap-3">
+                    <img id="edit_logo_preview" src="" alt="Logo Preview" class="w-12 h-12 rounded-xl border border-slate-200 object-contain p-1 bg-slate-50 hidden">
+                    <span id="edit_logo_placeholder" class="text-xs text-slate-400">No logo configured</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Business Email Address</label>
+                    <input type="email" id="edit_email" name="email" required class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm bg-white">
+                </div>
+            </div>
+            
+            <div class="flex justify-end pt-4 border-t border-slate-100 gap-3">
+                <button type="button" onclick="toggleModal('editBusinessModal')" class="px-5 py-2 border rounded-xl text-sm font-semibold hover:bg-slate-50">Cancel</button>
+                <button type="submit" class="px-6 py-2 rounded-xl text-white font-semibold bg-indigo-600 hover:bg-indigo-700 transition-colors text-sm">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 function toggleModal(id) {
     const modal = document.getElementById(id);
@@ -216,6 +309,31 @@ function toggleModal(id) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
     }
+}
+
+function openEditModal(id, name, owner, gstin, phone, email, address, logoUrl) {
+    const form = document.getElementById('editBusinessForm');
+    form.action = `/super-admin/business/edit/${id}/`;
+    
+    document.getElementById('edit_business_name').value = name;
+    document.getElementById('edit_owner_name').value = owner;
+    document.getElementById('edit_gstin').value = gstin;
+    document.getElementById('edit_phone').value = phone;
+    document.getElementById('edit_email').value = email;
+    document.getElementById('edit_address').value = address;
+    
+    const preview = document.getElementById('edit_logo_preview');
+    const placeholder = document.getElementById('edit_logo_placeholder');
+    if (logoUrl && logoUrl.trim() !== '') {
+        preview.src = logoUrl;
+        preview.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+    } else {
+        preview.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+    }
+    
+    toggleModal('editBusinessModal');
 }
 </script>
 {% endblock %}

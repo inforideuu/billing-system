@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 import json
+import csv
 from .models import Product, Supplier, Purchase, PurchaseItem
 from django.contrib.auth.decorators import login_required
 from core.decorators import role_required
@@ -113,5 +114,32 @@ def delete_product(request, product_id):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
     return JsonResponse({'status': 'error', 'message': 'Invalid method'})
+
+@login_required(login_url='/accounts/login/')
+@role_required(['ADMIN'])
+def export_inventory(request):
+    try:
+        products = filter_by_business(Product.objects.all(), request).order_by('name')
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="inventory_export.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['SKU', 'Item Type', 'Item Name', 'Price (INR)', 'Stock Quantity', 'HSN/SAC Code', 'GST Rate (%)'])
+        
+        for p in products:
+            writer.writerow([
+                p.sku,
+                p.get_item_type_display(),
+                p.name,
+                p.price,
+                p.stock_quantity if p.item_type == 'PRODUCT' else 'N/A',
+                p.hsn_code or '--',
+                p.gst_rate
+            ])
+            
+        return response
+    except Exception as e:
+        return HttpResponse(f"Error exporting inventory: {str(e)}", status=500)
 
 

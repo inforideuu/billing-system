@@ -8,14 +8,14 @@
     <div style="max-width: 600px; margin: 0 auto; background: white; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
         <!-- Header -->
         <div style="padding: 30px; background-color: #0f172a; color: white; text-align: center;">
-            <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">Zenelait Infotech</h1>
+            <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">{{ invoice.business.name|default:"Zenelait Infotech" }}</h1>
             <p style="margin: 5px 0 0; font-size: 14px; opacity: 0.8;">Your Tax Invoice Summary</p>
         </div>
         
         <!-- Body -->
         <div style="padding: 30px;">
             <p style="margin-top: 0; font-size: 16px;">Dear <strong>{{ invoice.customer.name }}</strong>,</p>
-            <p style="font-size: 15px; line-height: 1.5; color: #475569;">Thank you for shopping at Zenelait Infotech. Your transaction has been processed successfully. Please find a summary of your tax invoice details below.</p>
+            <p style="font-size: 15px; line-height: 1.5; color: #475569;">Thank you for shopping at {{ invoice.business.name|default:"Zenelait Infotech" }}. Your transaction has been processed successfully. Please find a summary of your tax invoice details below.</p>
             
             <!-- Metadata Box -->
             <div style="background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 8px; padding: 16px; margin: 25px 0;">
@@ -92,8 +92,8 @@
 
         <!-- Footer -->
         <div style="padding: 20px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 11px; color: #94a3b8; text-align: center; line-height: 1.6;">
-            <p style="margin: 0;"><strong>Zenelait Infotech.</strong> &middot; GSTIN: 33AABCU9603R1ZX</p>
-            <p style="margin: 2px 0 0;">123 Business Avenue, Tech Park, Bangalore, India</p>
+            <p style="margin: 0;"><strong>{{ invoice.business.name|default:"Zenelait Infotech" }}.</strong> &middot; GSTIN: {{ invoice.business.gstin|default:"33AABCU9603R1ZX" }}</p>
+            <p style="margin: 2px 0 0;">{{ invoice.business.address|default:"123 Business Avenue, Tech Park, Bangalore, India" }}</p>
             <p style="margin: 10px 0 0; font-style: italic;">This is an automatically generated email billing notification. Please do not reply.</p>
         </div>
     </div>
