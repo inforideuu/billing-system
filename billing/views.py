@@ -20,14 +20,28 @@ from django.shortcuts import redirect
 def pos(request):
     # Fetch all products to display in the POS catalog
     try:
+        business = get_business(request)
         products = filter_by_business(Product.objects.all(), request)
+        from intelligence.utils import get_dynamic_price
+        for product in products:
+            if product.item_type == 'PRODUCT':
+                dyn_price, is_active, reason = get_dynamic_price(product, business)
+                product.original_price = float(product.price)
+                product.dynamic_price = dyn_price
+                product.is_dynamic_active = is_active
+                product.dynamic_reason = reason
+            else:
+                product.original_price = float(product.price)
+                product.dynamic_price = float(product.price)
+                product.is_dynamic_active = False
+                product.dynamic_reason = "Base Price"
     except Exception:
         # Fallback dummy data if DB not ready
         products = [
-            {'id': 1, 'name': 'Wireless Mouse', 'price': 25.00, 'gst_rate': 18.00},
-            {'id': 2, 'name': 'Mechanical Keyboard', 'price': 120.00, 'gst_rate': 18.00},
-            {'id': 3, 'name': 'USB-C Cable', 'price': 15.00, 'gst_rate': 5.00},
-            {'id': 4, 'name': 'HD Monitor', 'price': 300.00, 'gst_rate': 28.00},
+            {'id': 1, 'name': 'Wireless Mouse', 'price': 25.00, 'gst_rate': 18.00, 'is_dynamic_active': False, 'original_price': 25.00, 'dynamic_price': 25.00, 'dynamic_reason': 'Base'},
+            {'id': 2, 'name': 'Mechanical Keyboard', 'price': 120.00, 'gst_rate': 18.00, 'is_dynamic_active': False, 'original_price': 120.00, 'dynamic_price': 120.00, 'dynamic_reason': 'Base'},
+            {'id': 3, 'name': 'USB-C Cable', 'price': 15.00, 'gst_rate': 5.00, 'is_dynamic_active': False, 'original_price': 15.00, 'dynamic_price': 15.00, 'dynamic_reason': 'Base'},
+            {'id': 4, 'name': 'HD Monitor', 'price': 300.00, 'gst_rate': 28.00, 'is_dynamic_active': False, 'original_price': 300.00, 'dynamic_price': 300.00, 'dynamic_reason': 'Base'},
         ]
         
     context = {
@@ -146,6 +160,27 @@ def process_payment(request):
                 
                 # Decrement Stock if Physical Product
                 if product.item_type == 'PRODUCT':
+                    from datetime import date
+                    product_batches = product.batches.filter(expiry_date__gt=date.today(), stock_quantity__gt=0).order_by('expiry_date')
+                    
+                    if product.batches.exists():
+                        total_unexpired_stock = sum(b.stock_quantity for b in product_batches)
+                        if total_unexpired_stock < int(item['qty']):
+                            raise Exception(f"Cannot sell product '{product.name}': Insufficient unexpired batch stock. Available: {total_unexpired_stock}")
+                        
+                        qty_left = int(item['qty'])
+                        for b in product_batches:
+                            if qty_left <= 0:
+                                break
+                            if b.stock_quantity >= qty_left:
+                                b.stock_quantity -= qty_left
+                                b.save()
+                                qty_left = 0
+                            else:
+                                qty_left -= b.stock_quantity
+                                b.stock_quantity = 0
+                                b.save()
+                                
                     product.stock_quantity -= int(item['qty'])
                     product.save()
                 

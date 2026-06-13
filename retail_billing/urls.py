@@ -25,6 +25,7 @@ urlpatterns = [
     path('', include('core.urls')),
     path('billing/', include('billing.urls')),
     path('inventory/', include('inventory.urls')),
+    path('intelligence/', include('intelligence.urls')),
     path('accounts/login/', auth_views.LoginView.as_view(authentication_form=CustomAuthenticationForm), name='login'),
     path('accounts/', include('django.contrib.auth.urls')),
 ]

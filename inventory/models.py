@@ -56,11 +56,30 @@ class Purchase(models.Model):
     def __str__(self):
         return f"PUR-{self.id} - {self.supplier.name if self.supplier else 'Unknown'}"
 
+class Batch(models.Model):
+    business = models.ForeignKey('core.Business', on_delete=models.CASCADE, null=True, blank=True, related_name='batches')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='batches')
+    batch_number = models.CharField(max_length=50)
+    manufacture_date = models.DateField(null=True, blank=True)
+    expiry_date = models.DateField()
+    stock_quantity = models.IntegerField(default=0)
+    initial_quantity = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.product.name} (Batch: {self.batch_number}) - Stock: {self.stock_quantity}"
+
+    @property
+    def is_expired(self):
+        from datetime import date
+        return self.expiry_date <= date.today()
+
 class PurchaseItem(models.Model):
     purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
     unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    batch = models.ForeignKey(Batch, on_delete=models.SET_NULL, null=True, blank=True, related_name='purchase_items')
     
     def save(self, *args, **kwargs):
         is_new = self.pk is None
@@ -68,6 +87,10 @@ class PurchaseItem(models.Model):
         if is_new and self.product.item_type == 'PRODUCT':
             self.product.stock_quantity += int(self.quantity)
             self.product.save()
+            # If batch is associated, let's sync batch stock!
+            if self.batch:
+                self.batch.stock_quantity += int(self.quantity)
+                self.batch.save()
             
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"

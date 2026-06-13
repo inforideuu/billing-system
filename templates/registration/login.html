@@ -1,24 +1,28 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | Zenelait Infotech Billing</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Outfit:wght@400;700;900&display=swap"
+        rel="stylesheet">
+
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #f8fafc;
             overflow: hidden;
         }
+
         .font-display {
             font-family: 'Outfit', sans-serif;
         }
-        
+
         /* Dynamic warm coral mesh gradients identical to home layout */
         .blob-bg {
             position: absolute;
@@ -30,23 +34,33 @@
             z-index: -1;
             animation: float-mesh 20s infinite ease-in-out alternate;
         }
+
         .blob-1 {
             background: radial-gradient(circle, rgba(239, 68, 68, 0.15), rgba(249, 115, 22, 0.05));
             top: -10%;
             left: -5%;
             animation-delay: 0s;
         }
+
         .blob-2 {
             background: radial-gradient(circle, rgba(249, 115, 22, 0.15), rgba(239, 68, 68, 0.05));
             bottom: -10%;
             right: -5%;
             animation-delay: -5s;
         }
-        
+
         @keyframes float-mesh {
-            0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(30px, 40px) scale(1.05); }
-            100% { transform: translate(-20px, -30px) scale(0.95); }
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate(30px, 40px) scale(1.05);
+            }
+
+            100% {
+                transform: translate(-20px, -30px) scale(0.95);
+            }
         }
 
         .glass-container {
@@ -55,26 +69,28 @@
             -webkit-backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.8);
             box-shadow: 0 30px 60px -12px rgba(15, 23, 42, 0.08),
-                        inset 0 1px 1px rgba(255, 255, 255, 1);
+                inset 0 1px 1px rgba(255, 255, 255, 1);
         }
-        
+
         .glass-input {
             background: rgba(255, 255, 255, 0.6);
             border: 1px solid rgba(203, 213, 225, 0.6);
             backdrop-filter: blur(4px);
             transition: all 0.3s ease;
         }
+
         .glass-input:focus {
             background: rgba(255, 255, 255, 1);
             border-color: #f97316;
             box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
         }
-        
+
         .brand-gradient-bg {
             background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
             position: relative;
             overflow: hidden;
         }
+
         .brand-gradient-bg::after {
             content: '';
             position: absolute;
@@ -87,47 +103,55 @@
         }
     </style>
 </head>
+
 <body class="flex items-center justify-center min-h-screen relative p-4">
 
     <!-- Animated Cinematic Overlay & Coral Mesh -->
-    <video autoplay muted loop playsinline class="fixed inset-0 w-full h-full object-cover z-[-2] pointer-events-none opacity-[0.15] saturate-[0.7] blur-[1px]">
+    <video autoplay muted loop playsinline
+        class="fixed inset-0 w-full h-full object-cover z-[-2] pointer-events-none opacity-[0.15] saturate-[0.7] blur-[1px]">
         <source src="https://vjs.zencdn.net/v/oceans.mp4" type="video/mp4">
     </video>
     <div class="blob-bg blob-1"></div>
     <div class="blob-bg blob-2"></div>
 
     <!-- Floating Back Button -->
-    <a href="/" class="hidden md:flex fixed top-8 left-8 px-4 py-2 rounded-xl bg-white/80 border border-slate-200 text-xs font-bold text-slate-600 hover:text-slate-900 transition-all backdrop-blur shadow-sm hover:shadow-md flex items-center gap-2 z-50">
+    <a href="/"
+        class="hidden md:flex fixed top-8 left-8 px-4 py-2 rounded-xl bg-white/80 border border-slate-200 text-xs font-bold text-slate-600 hover:text-slate-900 transition-all backdrop-blur shadow-sm hover:shadow-md flex items-center gap-2 z-50">
         <i class="fas fa-arrow-left"></i> Return Home
     </a>
 
     <!-- Floating Language Selector -->
-    <button onclick="toggleLanguage()" class="fixed top-8 right-8 px-4 py-2 rounded-xl bg-white/80 border border-slate-200 text-xs font-bold text-slate-600 hover:text-slate-900 transition-all backdrop-blur shadow-sm hover:shadow-md flex items-center gap-2 z-50">
+    <button onclick="toggleLanguage()"
+        class="fixed top-8 right-8 px-4 py-2 rounded-xl bg-white/80 border border-slate-200 text-xs font-bold text-slate-600 hover:text-slate-900 transition-all backdrop-blur shadow-sm hover:shadow-md flex items-center gap-2 z-50">
         <i class="fas fa-language text-sm"></i> <span id="langText">EN</span>
     </button>
 
     <!-- Glass-Morphic Login Card -->
     <div class="glass-container rounded-3xl w-full max-w-4xl flex overflow-hidden flex-col md:flex-row relative z-10">
-        
+
         <!-- Left Column: Epic Brand Hero -->
         <div class="w-full md:w-1/2 brand-gradient-bg text-white p-12 flex flex-col justify-between relative">
-            
+
             <!-- Small decorative element -->
             <div class="absolute bottom-10 left-10 w-24 h-24 border border-white/10 rounded-full blur-sm"></div>
 
             <div class="mt-16 md:mt-0 mb-8 relative z-10 flex items-center">
                 <a href="/" class="block bg-white p-3 rounded-2xl shadow-sm inline-flex items-center justify-center">
-                    <img src="{% static 'images/logo.svg' %}" alt="Zenelait Infotech" class="h-12 w-auto hover:scale-105 transition-transform duration-300">
+                    <img src="{% static 'images/logo.svg' %}" alt="Zenelait Infotech"
+                        class="h-12 w-auto hover:scale-105 transition-transform duration-300">
                 </a>
             </div>
 
             <div class="my-auto space-y-6 relative z-10">
-                <div class="w-16 h-16 bg-white/10 backdrop-blur border border-white/20 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
+                <div
+                    class="w-16 h-16 bg-white/10 backdrop-blur border border-white/20 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
                     <i class="fas fa-store"></i>
                 </div>
-                <h1 class="text-4xl font-black tracking-tight font-display leading-tight">Unlock Secure <br/>Console Access.</h1>
+                <h1 class="text-4xl font-black tracking-tight font-display leading-tight">Unlock Secure <br />Console
+                    Access.</h1>
                 <p class="text-white/80 text-sm leading-relaxed max-w-xs">
-                    Seamlessly manage point-of-sale invoicing, complete statutory ledger audit files, and monitor multi-agent performance metrics.
+                    Seamlessly manage point-of-sale invoicing, complete statutory ledger audit files, and monitor
+                    multi-agent performance metrics.
                 </p>
             </div>
 
@@ -142,53 +166,61 @@
         <div class="w-full md:w-1/2 p-12 flex flex-col justify-center">
             <div class="mb-8">
                 <h2 class="text-3xl font-black text-slate-800 font-display tracking-tight">Operator Sign-In</h2>
-                <p class="text-xs font-medium text-slate-400 mt-1 uppercase tracking-wider">Console Authentication Core v3.0</p>
+                <p class="text-xs font-medium text-slate-400 mt-1 uppercase tracking-wider">Console Authentication Core
+                    v3.0</p>
             </div>
 
             <form method="post" action="{% url 'login' %}" class="space-y-5">
                 {% csrf_token %}
-                
+
                 {% if messages %}
-                    {% for message in messages %}
-                        <div class="bg-rose-50 text-rose-600 p-4 rounded-2xl text-xs font-bold border border-rose-100 flex items-center gap-3 shadow-sm animate-shake mb-4">
-                            <i class="fas fa-ban text-sm"></i>
-                            <span>{{ message }}</span>
-                        </div>
-                    {% endfor %}
+                {% for message in messages %}
+                <div
+                    class="bg-rose-50 text-rose-600 p-4 rounded-2xl text-xs font-bold border border-rose-100 flex items-center gap-3 shadow-sm animate-shake mb-4">
+                    <i class="fas fa-ban text-sm"></i>
+                    <span>{{ message }}</span>
+                </div>
+                {% endfor %}
                 {% endif %}
-                
+
                 {% if form.non_field_errors %}
-                    {% for error in form.non_field_errors %}
-                    <div class="bg-rose-50 text-rose-600 p-4 rounded-2xl text-xs font-bold border border-rose-100 flex items-center gap-3 shadow-sm animate-shake mb-4">
-                        <i class="fas fa-shield-halved text-sm"></i>
-                        <span>{{ error }}</span>
-                    </div>
-                    {% endfor %}
+                {% for error in form.non_field_errors %}
+                <div
+                    class="bg-rose-50 text-rose-600 p-4 rounded-2xl text-xs font-bold border border-rose-100 flex items-center gap-3 shadow-sm animate-shake mb-4">
+                    <i class="fas fa-shield-halved text-sm"></i>
+                    <span>{{ error }}</span>
+                </div>
+                {% endfor %}
                 {% elif form.errors %}
-                    <div class="bg-rose-50 text-rose-600 p-4 rounded-2xl text-xs font-bold border border-rose-100 flex items-center gap-3 shadow-sm animate-shake mb-4">
-                        <i class="fas fa-shield-halved text-sm"></i>
-                        <span>Access Denied: Verified credentials mismatch.</span>
-                    </div>
+                <div
+                    class="bg-rose-50 text-rose-600 p-4 rounded-2xl text-xs font-bold border border-rose-100 flex items-center gap-3 shadow-sm animate-shake mb-4">
+                    <i class="fas fa-shield-halved text-sm"></i>
+                    <span>Access Denied: Verified credentials mismatch.</span>
+                </div>
                 {% endif %}
 
                 <div class="space-y-2">
-                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider">Access Identity</label>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider">Access
+                        Identity</label>
                     <div class="relative">
-                        <i class="fas fa-id-badge absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <i
+                            class="fas fa-id-badge absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
                         <input type="text" name="username" placeholder="Operator Username" required autofocus
-                               class="w-full pl-11 pr-4 py-3.5 glass-input rounded-2xl outline-none text-sm font-medium text-slate-700 placeholder:text-slate-400 shadow-sm">
+                            class="w-full pl-11 pr-4 py-3.5 glass-input rounded-2xl outline-none text-sm font-medium text-slate-700 placeholder:text-slate-400 shadow-sm">
                     </div>
                 </div>
 
                 <div class="space-y-2">
                     <div class="flex justify-between items-center">
-                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider">Security Key</label>
-                        <a href="#" class="text-xs text-red-500 hover:text-red-600 font-bold transition-colors">Reset Path</a>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider">Security
+                            Key</label>
+                        <!-- <a href="#" class="text-xs text-red-500 hover:text-red-600 font-bold transition-colors">Reset Path</a> -->
                     </div>
                     <div class="relative">
-                        <i class="fas fa-key absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <i
+                            class="fas fa-key absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
                         <input type="password" name="password" placeholder="••••••••" required
-                               class="w-full pl-11 pr-4 py-3.5 glass-input rounded-2xl outline-none text-sm font-medium text-slate-700 placeholder:text-slate-400 shadow-sm">
+                            class="w-full pl-11 pr-4 py-3.5 glass-input rounded-2xl outline-none text-sm font-medium text-slate-700 placeholder:text-slate-400 shadow-sm">
                     </div>
                 </div>
 
@@ -197,8 +229,11 @@
                     <i class="fas fa-lock-open text-[10px] text-emerald-500"></i> SSL Encrypted Client-Session Node
                 </div>
 
-                <button type="submit" class="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-black py-4 px-6 rounded-2xl transition-all shadow-lg hover:shadow-orange-500/20 flex justify-center items-center gap-2 text-sm uppercase tracking-wide group">
-                    Initialize Connection <i class="fas fa-circle-notch animate-spin group-active:inline-block hidden ml-2 text-xs"></i> <i class="fas fa-chevron-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                <button type="submit"
+                    class="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-black py-4 px-6 rounded-2xl transition-all shadow-lg hover:shadow-orange-500/20 flex justify-center items-center gap-2 text-sm uppercase tracking-wide group">
+                    Initialize Connection <i
+                        class="fas fa-circle-notch animate-spin group-active:inline-block hidden ml-2 text-xs"></i> <i
+                        class="fas fa-chevron-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
                 </button>
             </form>
         </div>
@@ -208,6 +243,7 @@
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
 
-    <script src="{% static 'js/main.js' %}?v=99"></script>
+    <script src="{% static 'js/main.js' %}?v=105"></script>
 </body>
+
 </html>

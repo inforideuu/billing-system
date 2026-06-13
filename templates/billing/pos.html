@@ -51,7 +51,7 @@
 
         <div class="flex-1 overflow-y-auto pr-2 grid grid-cols-2 sm:grid-cols-3 gap-4" id="productGrid">
             {% for product in products %}
-            <div class="glass-card p-4 rounded-xl cursor-pointer group" onclick="addToCart({{ product.id }}, '{{ product.name }}', {{ product.price }}, {{ product.gst_rate }}, {{ product.category.id|default:'null' }})">
+            <div class="glass-card p-4 rounded-xl cursor-pointer group" onclick="addToCart({{ product.id }}, '{{ product.name }}', {% if product.is_dynamic_active %}{{ product.dynamic_price }}{% else %}{{ product.price }}{% endif %}, {{ product.gst_rate }}, {{ product.category.id|default:'null' }})">
                 <div class="w-full h-24 bg-slate-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden text-3xl text-slate-400 group-hover:text-red-400 transition-colors">
                     {% if product.image %}
                         <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
@@ -61,7 +61,16 @@
                 </div>
                 <h4 class="font-medium text-sm truncate mb-1">{{ product.name }}</h4>
                 <div class="flex justify-between items-center mb-3">
-                    <span class="text-red-500 font-bold">₹{{ product.price }}</span>
+                    <div>
+                        {% if product.is_dynamic_active %}
+                            <span class="text-[10px] line-through text-slate-400 block font-medium">₹{{ product.original_price }}</span>
+                            <span class="text-indigo-600 font-extrabold text-sm flex items-center gap-0.5" title="{{ product.dynamic_reason }}">
+                                <i class="fas fa-bolt text-[10px]"></i> ₹{{ product.dynamic_price }}
+                            </span>
+                        {% else %}
+                            <span class="text-red-500 font-bold">₹{{ product.price }}</span>
+                        {% endif %}
+                    </div>
                     <span class="text-[10px] text-slate-500 bg-slate-100 rounded px-1.5 py-0.5">{{ product.gst_rate }}% GST</span>
                 </div>
                 <button class="w-full py-2 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 group-hover:bg-red-500 group-hover:text-white group-hover:border-red-500 transition-all uppercase tracking-wider">
@@ -188,7 +197,7 @@
             id: {{ product.id }},
             name: "{{ product.name|escapejs }}",
             sku: "{{ product.sku|escapejs }}",
-            price: parseFloat("{{ product.price }}"),
+            price: parseFloat("{% if product.is_dynamic_active %}{{ product.dynamic_price }}{% else %}{{ product.price }}{% endif %}"),
             gstRate: parseFloat("{{ product.gst_rate }}"),
             categoryId: {{ product.category.id|default:"null" }}
         };

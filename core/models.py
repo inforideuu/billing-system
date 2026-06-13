@@ -14,6 +14,22 @@ class Business(models.Model):
     is_subscription_active = models.BooleanField(default=True)
     subscription_end_date = models.DateTimeField(null=True, blank=True)
     festival_offer_enabled = models.BooleanField(default=False, help_text="Global toggle for Festival Offers")
+    
+    # Advanced Intelligent Features Configuration
+    smart_insights_enabled = models.BooleanField(default=True, help_text="Toggle Smart Insights module")
+    forecasting_enabled = models.BooleanField(default=True, help_text="Toggle Demand Forecasting module")
+    dynamic_pricing_enabled = models.BooleanField(default=False, help_text="Toggle Dynamic Pricing system")
+    batch_tracking_enabled = models.BooleanField(default=True, help_text="Toggle Batch & Expiry tracking module")
+    
+    # Alert and Pricing Thresholds
+    low_stock_threshold = models.IntegerField(default=5, help_text="Minimum stock level for alerts")
+    expiry_alert_days = models.IntegerField(default=30, help_text="Days prior to expiry for warning alerts")
+    
+    # Dynamic Pricing Adjustment percentages
+    pricing_low_stock_percent = models.DecimalField(max_digits=5, decimal_places=2, default=10.00, help_text="Percent price increase for low stock")
+    pricing_high_demand_percent = models.DecimalField(max_digits=5, decimal_places=2, default=15.00, help_text="Percent price increase for high demand")
+    pricing_clearance_percent = models.DecimalField(max_digits=5, decimal_places=2, default=20.00, help_text="Percent price discount for near-expiry clearance")
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

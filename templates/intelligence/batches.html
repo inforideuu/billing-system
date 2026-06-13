@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+
+{% block title %}Batch & Expiry Management | Retail Billing{% endblock %}
+{% block page_title %}Batch & Expiry Tracking{% endblock %}
+
+{% block content %}
+<div class="space-y-6 pb-12 animate-slide-up">
+    
+    <!-- Summaries Widgets -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Total Batches -->
+        <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
+            <div class="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 text-xl flex-shrink-0">
+                <i class="fas fa-layer-group"></i>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Batches</p>
+                <h3 class="text-2xl font-black text-slate-800">{{ batches.count }}</h3>
+            </div>
+        </div>
+        
+        <!-- Expired Batches -->
+        <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
+            <div class="w-12 h-12 bg-rose-50 border border-rose-100 rounded-xl flex items-center justify-center text-rose-600 text-xl flex-shrink-0">
+                <i class="fas fa-calendar-times"></i>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Expired Batches</p>
+                <h3 class="text-2xl font-black text-slate-800" id="expiredCount">0</h3>
+            </div>
+        </div>
+        
+        <!-- Expiring in 30 days -->
+        <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
+            <div class="w-12 h-12 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center text-amber-600 text-xl flex-shrink-0">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Expiring Soon</p>
+                <h3 class="text-2xl font-black text-slate-800" id="expiringCount">0</h3>
+            </div>
+        </div>
+        
+        <!-- Actions Panel -->
+        <div class="glass-panel p-5 rounded-2xl flex items-center justify-center">
+            <button type="button" onclick="openAddBatchModal()" class="w-full bg-gradient-to-r from-red-600 to-red-800 text-white font-bold py-3 px-4 rounded-xl text-xs hover:scale-102 transition-transform shadow-md uppercase tracking-wider flex items-center justify-center gap-2">
+                <i class="fas fa-plus"></i> Add New Batch
+            </button>
+        </div>
+    </div>
+
+    <!-- Batch Table list -->
+    <div class="glass-panel p-6 rounded-2xl">
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <div class="relative w-full sm:w-1/3">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500"></i>
+                <input type="text" id="batchSearch" placeholder="Search batch number or SKU..." 
+                       class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-10 pr-4 text-sm text-slate-900 focus:outline-none focus:border-red-500 transition-colors">
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-500"><i class="fas fa-circle-info mr-1"></i> Pricing and checkout automatically select oldest unexpired batches first.</span>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[800px]" id="batchesTable">
+                <thead>
+                    <tr class="text-slate-500 text-sm border-b border-slate-200">
+                        <th class="pb-3 px-4">Product Name</th>
+                        <th class="pb-3 px-4">SKU</th>
+                        <th class="pb-3 px-4">Batch Number</th>
+                        <th class="pb-3 px-4">Mfg Date</th>
+                        <th class="pb-3 px-4">Expiry Date</th>
+                        <th class="pb-3 px-4">Stock</th>
+                        <th class="pb-3 px-4 text-center">Status</th>
+                        <th class="pb-3 px-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm">
+                    {% for b in batches %}
+                    <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors batch-row" 
+                        data-expired="{% if b.expiry_date <= today %}true{% else %}false{% endif %}"
+                        data-expiring="{% if b.expiry_date > today and b.expiry_date <= expiry_threshold %}true{% else %}false{% endif %}">
+                        <td class="py-4 px-4 font-semibold text-slate-800">{{ b.product.name }}</td>
+                        <td class="py-4 px-4 font-mono text-slate-500 text-xs">{{ b.product.sku }}</td>
+                        <td class="py-4 px-4 font-medium"><span class="bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-mono text-xs">{{ b.batch_number }}</span></td>
+                        <td class="py-4 px-4 text-slate-500 font-medium">{{ b.manufacture_date|default:"--" }}</td>
+                        <td class="py-4 px-4 font-semibold {% if b.expiry_date <= today %}text-red-500{% else %}text-slate-700{% endif %}">{{ b.expiry_date }}</td>
+                        <td class="py-4 px-4">
+                            <span class="font-bold text-slate-800">{{ b.stock_quantity }}</span>
+                            <span class="text-slate-400 text-xs font-normal">/ {{ b.initial_quantity }}</span>
+                        </td>
+                        <td class="py-4 px-4 text-center">
+                            {% if b.expiry_date <= today %}
+                                <span class="px-2.5 py-0.5 bg-rose-100 border border-rose-200 text-rose-700 text-xs font-bold rounded-full">Expired</span>
+                            {% elif b.stock_quantity <= 0 %}
+                                <span class="px-2.5 py-0.5 bg-slate-100 border border-slate-200 text-slate-500 text-xs font-bold rounded-full">Sold Out</span>
+                            {% elif b.expiry_date <= expiry_threshold %}
+                                <span class="px-2.5 py-0.5 bg-amber-100 border border-amber-200 text-amber-700 text-xs font-bold rounded-full">Expiring Soon</span>
+                            {% else %}
+                                <span class="px-2.5 py-0.5 bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-full">Healthy</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-4 text-right">
+                            <button onclick="confirmDeleteBatch({{ b.id }}, '{{ b.batch_number|escapejs }}')" class="text-red-400 hover:text-red-600 transition-colors" title="Delete Batch">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    
+                    {% if not batches %}
+                    <tr>
+                        <td colspan="8" class="text-center py-10 text-slate-400">
+                            No batches currently loaded. Register a batch during purchase entries or click "Add New Batch".
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Add Batch Modal -->
+<div id="addBatchModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div class="glass-panel w-full max-w-md p-6 rounded-2xl animate-slide-up mx-4 relative bg-white">
+        <button onclick="closeAddBatchModal()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-900"><i class="fas fa-times text-xl"></i></button>
+        <h3 class="text-xl font-bold mb-4">Register Inventory Batch</h3>
+        <form onsubmit="submitAddBatch(event)" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Select Product</label>
+                <select id="addBatchProduct" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-900 focus:outline-none focus:border-red-500 transition-colors">
+                    <option value="" disabled selected>-- Select Product --</option>
+                    {% for p in products %}
+                    <option value="{{ p.id }}">{{ p.name }} (SKU: {{ p.sku }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Batch Number</label>
+                <input type="text" id="addBatchNumber" required placeholder="e.g. BATCH-2026-A" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-4 text-sm text-slate-900 focus:outline-none focus:border-red-500">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Mfg Date (Optional)</label>
+                    <input type="date" id="addMfgDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-4 text-sm text-slate-900 focus:outline-none focus:border-red-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Expiry Date</label>
+                    <input type="date" id="addExpDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-4 text-sm text-slate-900 focus:outline-none focus:border-red-500">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Initial Batch Stock Quantity</label>
+                <input type="number" id="addBatchStock" required min="1" placeholder="e.g. 50" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-4 text-sm text-slate-900 focus:outline-none focus:border-red-500">
+            </div>
+            
+            <button type="submit" class="w-full bg-gradient-to-r from-red-600 to-red-800 text-white font-bold py-3 rounded-xl mt-4 hover:opacity-90 transition-opacity shadow-md uppercase text-xs tracking-wider">
+                Save Batch
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteBatchModal" class="fixed inset-0 z-[110] hidden items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="glass-panel w-full max-w-sm p-6 rounded-2xl animate-slide-up mx-4 text-center relative bg-white">
+        <div class="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center text-rose-600 text-2xl mx-auto mb-4 border border-rose-100">
+            <i class="fas fa-trash-alt"></i>
+        </div>
+        <h3 class="text-lg font-bold text-slate-800 mb-2">Delete Batch</h3>
+        <p class="text-slate-500 text-sm mb-6">Are you sure you want to remove batch <span id="deleteBatchNumText" class="font-bold text-slate-800"></span>? This will adjust the product's overall stock quantity accordingly.</p>
+        <input type="hidden" id="deleteBatchId">
+        <div class="flex gap-3 justify-center">
+            <button onclick="closeDeleteBatchModal()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all uppercase">
+                Cancel
+            </button>
+            <button onclick="executeDeleteBatch()" class="px-5 py-2.5 bg-gradient-to-r from-red-500 to-rose-600 text-white font-black rounded-xl text-xs shadow-md transition-all uppercase">
+                Confirm Delete
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Count expired & soon expiring batches
+        const rows = document.querySelectorAll('.batch-row');
+        let expired = 0;
+        let expiring = 0;
+        
+        rows.forEach(row => {
+            if(row.dataset.expired === 'true') expired++;
+            if(row.dataset.expiring === 'true') expiring++;
+        });
+        
+        document.getElementById('expiredCount').innerText = expired;
+        document.getElementById('expiringCount').innerText = expiring;
+    });
+
+    // Search filtration
+    document.getElementById('batchSearch').addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        const rows = document.querySelectorAll('.batch-row');
+        
+        rows.forEach(row => {
+            const productName = row.querySelector('td:first-child').innerText.toLowerCase();
+            const sku = row.querySelector('td:nth-child(2)').innerText.toLowerCase();
+            const batchNum = row.querySelector('td:nth-child(3)').innerText.toLowerCase();
+            
+            if(productName.includes(query) || sku.includes(query) || batchNum.includes(query)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    function openAddBatchModal() {
+        document.getElementById('addBatchModal').classList.remove('hidden');
+        document.getElementById('addBatchModal').classList.add('flex');
+    }
+
+    function closeAddBatchModal() {
+        document.getElementById('addBatchModal').classList.add('hidden');
+        document.getElementById('addBatchModal').classList.remove('flex');
+    }
+
+    function submitAddBatch(event) {
+        event.preventDefault();
+        
+        const formData = new FormData();
+        formData.append('product_id', document.getElementById('addBatchProduct').value);
+        formData.append('batch_number', document.getElementById('addBatchNumber').value);
+        formData.append('manufacture_date', document.getElementById('addMfgDate').value);
+        formData.append('expiry_date', document.getElementById('addExpDate').value);
+        formData.append('stock_quantity', document.getElementById('addBatchStock').value);
+        
+        fetch('{% url "add_batch" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                closeAddBatchModal();
+                showToast('Batch added and stock synced successfully!', 'success');
+                setTimeout(() => { window.location.reload(); }, 1000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(err => {
+            showToast('Network error occurred.', 'error');
+        });
+    }
+
+    function confirmDeleteBatch(id, num) {
+        document.getElementById('deleteBatchId').value = id;
+        document.getElementById('deleteBatchNumText').innerText = num;
+        
+        document.getElementById('deleteBatchModal').classList.remove('hidden');
+        document.getElementById('deleteBatchModal').classList.add('flex');
+    }
+
+    function closeDeleteBatchModal() {
+        document.getElementById('deleteBatchModal').classList.add('hidden');
+        document.getElementById('deleteBatchModal').classList.remove('flex');
+    }
+
+    function executeDeleteBatch() {
+        const id = document.getElementById('deleteBatchId').value;
+        
+        fetch(`/intelligence/batches/delete/${id}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            closeDeleteBatchModal();
+            if(data.status === 'success') {
+                showToast('Batch removed successfully!', 'success');
+                setTimeout(() => { window.location.reload(); }, 1000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(err => {
+            closeDeleteBatchModal();
+            showToast('Network error occurred.', 'error');
+        });
+    }
+</script>
+{% endblock %}

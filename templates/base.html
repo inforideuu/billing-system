@@ -77,6 +77,20 @@
                         <i class="fas fa-gift text-lg text-red-500"></i>
                         <span class="text-[10px] font-medium leading-tight text-red-600">Offers</span>
                     </a>
+                    <a href="{% url 'smart_insights' %}" class="nav-item flex flex-col items-center justify-center p-3 rounded-xl hover:bg-slate-100 transition-colors text-center gap-1">
+                        <i class="fas fa-brain text-lg text-emerald-500"></i>
+                        <span class="text-[10px] font-medium leading-tight text-emerald-600">Insights</span>
+                    </a>
+                    {% if request.user.profile.business.batch_tracking_enabled %}
+                    <a href="{% url 'batches_list' %}" class="nav-item flex flex-col items-center justify-center p-3 rounded-xl hover:bg-slate-100 transition-colors text-center gap-1">
+                        <i class="fas fa-layer-group text-lg text-indigo-500"></i>
+                        <span class="text-[10px] font-medium leading-tight text-indigo-600">Batches</span>
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'intelligence_settings' %}" class="nav-item flex flex-col items-center justify-center p-3 rounded-xl hover:bg-slate-100 transition-colors text-center gap-1">
+                        <i class="fas fa-sliders text-lg text-slate-500"></i>
+                        <span class="text-[10px] font-medium leading-tight">Settings</span>
+                    </a>
                     {% endif %}
                     
                     {% if request.user.profile.role != 'SUPER_ADMIN' %}
@@ -122,6 +136,28 @@
                 </div>
                 
                 <div class="flex items-center space-x-4">
+                    <!-- Notifications -->
+                    <div class="relative group">
+                        <button id="notificationBtn" onclick="toggleNotificationDropdown()" class="w-10 h-10 rounded-full glass-btn flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-slate-100 transition-colors focus:outline-none relative">
+                            <i class="fas fa-bell"></i>
+                            <span id="notificationBadge" class="absolute top-1 right-1 w-3.5 h-3.5 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center hidden border border-white">0</span>
+                        </button>
+                        
+                        <!-- Dropdown Panel -->
+                        <div id="notificationDropdown" class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 hidden z-[60] overflow-hidden origin-top-right transform transition-all duration-200">
+                            <div class="bg-slate-50 border-b border-slate-100 px-4 py-3 flex justify-between items-center">
+                                <h3 class="font-bold text-slate-800 text-sm">Alerts & Notifications</h3>
+                                <span class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold" id="notificationCountLabel">0</span>
+                            </div>
+                            <div class="max-h-80 overflow-y-auto scrollbar-hide bg-white" id="notificationList">
+                                <!-- Notifications will be injected here via JS -->
+                            </div>
+                            <div class="bg-slate-50 border-t border-slate-100 px-4 py-2 text-center">
+                                <a href="{% url 'smart_insights' %}" class="text-xs font-bold text-red-600 hover:text-red-700">View Smart Insights Dashboard</a>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Language Toggle -->
                     <button class="px-3 py-1 rounded-full glass-btn text-sm hover:scale-105 transition-transform" onclick="toggleLanguage()">
                         <i class="fas fa-language mr-1"></i> <span id="langText">EN</span>
@@ -161,24 +197,617 @@
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
 
-    <script src="{% static 'js/main.js' %}?v=99"></script>
+    <script src="{% static 'js/main.js' %}?v=105"></script>
     {% block scripts %}{% endblock %}
     
-    <!-- Handle Django Messages in Toasts -->
+    </script>
+
+    <!-- Floating AI Chatbot UI Widget -->
+    <div class="fixed bottom-6 right-6 z-[95] flex flex-col items-end pointer-events-none">
+        
+        <!-- Floating Chat Window -->
+        <div id="aiChatWindow" class="w-96 h-[520px] bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-2xl rounded-2xl flex flex-col overflow-hidden mb-4 scale-95 translate-y-4 opacity-0 pointer-events-none transition-all duration-300 origin-bottom-right">
+            
+            <!-- Chat Header -->
+            <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-red-950 text-white p-3.5 flex items-center justify-between border-b border-slate-700/30">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 bg-gradient-to-br from-red-500 to-rose-600 rounded-xl flex items-center justify-center text-white shadow-md relative">
+                        <i class="fas fa-brain text-sm"></i>
+                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border border-white rounded-full"></span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-xs tracking-wide">RetailPos AI Assistant</h4>
+                        <div class="flex items-center gap-1 mt-0.5">
+                            <span class="text-[9px] text-slate-300 font-medium">Active Thread:</span>
+                            <select id="chatSessionSelector" onchange="switchChatSession(this.value)" class="bg-slate-800 text-[9px] text-white border-none rounded px-1 py-0.5 focus:outline-none max-w-[120px] truncate">
+                                <option value="">-- New Chat --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="createNewChatSession()" class="w-6 h-6 flex items-center justify-center rounded hover:bg-white/10 text-slate-300 transition-colors" title="New Conversation">
+                        <i class="fas fa-plus text-xs"></i>
+                    </button>
+                    <button onclick="toggleChatWindow()" class="w-6 h-6 flex items-center justify-center rounded hover:bg-white/10 text-slate-300 transition-colors" title="Close">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Conversation Body -->
+            <div id="aiChatBody" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/70 scroll-smooth">
+                <!-- Initial Welcome Turn -->
+                <div class="flex items-start gap-2.5">
+                    <div class="w-7 h-7 bg-red-100 text-red-600 rounded-lg flex items-center justify-center text-xs flex-shrink-0">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-none p-3 shadow-sm max-w-[80%]">
+                        <p class="text-xs text-slate-700 leading-relaxed">
+                            👋 Hello **{{ request.user.username }}**! I am your real-time **RetailPos AI Assistant**.<br><br>
+                            I can fetch live report statistics, query catalog stock, or check invoice status. Try clicking one of the quick options below!
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Typing Indicator (Thinking bubble) -->
+            <div id="aiChatTypingIndicator" class="hidden items-center gap-2.5 px-4 py-2 bg-slate-50/70">
+                <div class="w-7 h-7 bg-red-100 text-red-600 rounded-lg flex items-center justify-center text-xs flex-shrink-0">
+                    <i class="fas fa-ellipsis-h animate-pulse"></i>
+                </div>
+                <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-none py-2 px-3 shadow-sm text-[10px] text-slate-500 italic">
+                    AI is thinking...
+                </div>
+            </div>
+            
+            <!-- Horizontal Quick suggestions Scroll Tray -->
+            <div class="px-3 py-2 bg-white border-t border-slate-100 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-none" id="quickSuggestionsTray">
+                <button onclick="submitSuggestedQuery('Show today\'s sales')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">📊 Today's Sales</button>
+                <button onclick="submitSuggestedQuery('Which products are low in stock?')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">⚠️ Low Stock</button>
+                <button onclick="submitSuggestedQuery('Top selling products')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">🔥 Top Sellers</button>
+                <button onclick="submitSuggestedQuery('Pending payments')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">⏳ Unpaid Bills</button>
+            </div>
+            
+            <!-- Message Input Area -->
+            <div class="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
+                <!-- Lang Indicator (Voice English vs Tamil) -->
+                <button onclick="toggleVoiceLanguage()" id="voiceLangBtn" class="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-500 hover:bg-slate-100 transition-colors flex-shrink-0" title="Switch Input Language (EN / TA)">
+                    EN
+                </button>
+                
+                <!-- Voice speech button -->
+                <button onclick="toggleVoiceDictation()" id="voiceDictationBtn" class="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0" title="Voice Dictation (Speech to Text)">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                
+                <input type="text" id="aiChatInput" onkeypress="handleChatKeyPress(event)" placeholder="Ask about sales, stock, invoices..." 
+                       class="flex-1 bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:border-red-500 transition-colors">
+                
+                <button onclick="submitChatMessage()" class="w-8 h-8 bg-gradient-to-r from-red-600 to-red-800 text-white rounded-lg flex items-center justify-center shadow hover:opacity-95 transition-opacity flex-shrink-0">
+                    <i class="fas fa-paper-plane text-xs"></i>
+                </button>
+            </div>
+            
+        </div>
+        
+        <!-- Chat Toggle Button -->
+        <button onclick="toggleChatWindow()" class="w-14 h-14 bg-gradient-to-r from-red-600 to-red-800 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all z-[90] relative group pointer-events-auto">
+            <span class="absolute inset-0 bg-red-500/20 rounded-full animate-ping group-hover:hidden"></span>
+            <i class="fas fa-brain text-xl"></i>
+        </button>
+        
+    </div>
+
+    <!-- Chatbot Stylesheets -->
+    <style>
+        .scrollbar-none::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-none {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        #aiChatWindow.chat-active {
+            opacity: 1;
+            transform: scale(1) translate-y(0);
+            pointer-events: auto;
+        }
+        .pulse-record {
+            background-color: #fecaca !important;
+            color: #ef4444 !important;
+            border-color: #f87171 !important;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Message markdown formatting styles */
+        .chat-md-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+            font-size: 10px;
+        }
+        .chat-md-table th {
+            background-color: #f8fafc;
+            border-bottom: 2px solid #e2e8f0;
+            padding: 4px 6px;
+            font-weight: bold;
+            text-align: left;
+        }
+        .chat-md-table td {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 4px 6px;
+        }
+    </style>
+
+    <!-- Chatbot Interaction Scripts -->
     <script>
+        let currentSessionId = null;
+        let voiceInputLanguage = 'en-US'; // English by default, toggles to 'ta-IN' for Tamil
+
         document.addEventListener('DOMContentLoaded', function() {
-            {% if messages %}
-                {% for message in messages %}
-                    let type = 'info';
-                    {% if 'error' in message.tags %}type = 'error';
-                    {% elif 'success' in message.tags %}type = 'success';
-                    {% elif 'warning' in message.tags %}type = 'warning';
-                    {% endif %}
-                    if (typeof showToast === 'function') {
-                        showToast("{{ message|escapejs }}", type);
+            // Load previous chatbot threads
+            loadChatSessions();
+        });
+
+        function toggleChatWindow() {
+            const win = document.getElementById('aiChatWindow');
+            win.classList.toggle('chat-active');
+            if(win.classList.contains('chat-active')) {
+                document.getElementById('aiChatInput').focus();
+            }
+        }
+
+        function loadChatSessions() {
+            fetch('/intelligence/chat/sessions/')
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    const selector = document.getElementById('chatSessionSelector');
+                    // Reset except first option
+                    selector.innerHTML = '<option value="">-- New Chat --</option>';
+                    data.sessions.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = s.title;
+                        selector.appendChild(opt);
+                    });
+                    if(currentSessionId) {
+                        selector.value = currentSessionId;
                     }
-                {% endfor %}
-            {% endif %}
+                }
+            });
+        }
+
+        function switchChatSession(sessionId) {
+            currentSessionId = sessionId ? parseInt(sessionId) : null;
+            const chatBody = document.getElementById('aiChatBody');
+            
+            if(!sessionId) {
+                // Load welcome state
+                chatBody.innerHTML = `
+                    <div class="flex items-start gap-2.5 animate-slide-up">
+                        <div class="w-7 h-7 bg-red-100 text-red-600 rounded-lg flex items-center justify-center text-xs flex-shrink-0">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-none p-3 shadow-sm max-w-[80%]">
+                            <p class="text-xs text-slate-700 leading-relaxed">
+                                👋 Hello **{{ request.user.username }}**! I am your real-time **RetailPos AI Assistant**.<br><br>
+                                I can fetch live report statistics, query catalog stock, or check invoice status. Try clicking one of the quick options below!
+                            </p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Fetch messages inside selected thread
+            chatBody.innerHTML = '<div class="text-center text-xs text-slate-400 py-6 italic">Loading chat history...</div>';
+            
+            fetch(`/intelligence/chat/sessions/${sessionId}/messages/`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    chatBody.innerHTML = '';
+                    data.messages.forEach(msg => {
+                        appendMessageToDOM(msg.sender, msg.message, msg.timestamp);
+                    });
+                    scrollChatToBottom();
+                } else {
+                    showToast('Failed to load message history.', 'error');
+                }
+            })
+            .catch(() => {
+                showToast('Network error occurred.', 'error');
+            });
+        }
+
+        function createNewChatSession() {
+            currentSessionId = null;
+            document.getElementById('chatSessionSelector').value = '';
+            switchChatSession('');
+            showToast('Started new chatbot thread.', 'success');
+        }
+
+        function handleChatKeyPress(event) {
+            if(event.key === 'Enter') {
+                submitChatMessage();
+            }
+        }
+
+        function submitSuggestedQuery(text) {
+            document.getElementById('aiChatInput').value = text;
+            submitChatMessage();
+        }
+
+        function submitChatMessage() {
+            const input = document.getElementById('aiChatInput');
+            const messageText = input.value.trim();
+            if(!messageText) return;
+            
+            // 1. Append user message to DOM
+            appendMessageToDOM('USER', messageText, getCurrentTimeStr());
+            input.value = '';
+            scrollChatToBottom();
+            
+            // 2. Show thinking bubble
+            document.getElementById('aiChatTypingIndicator').classList.remove('hidden');
+            document.getElementById('aiChatTypingIndicator').classList.add('flex');
+            
+            // 3. Post to API
+            fetch('/intelligence/chat/message/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    message: messageText,
+                    session_id: currentSessionId
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                // Hide thinking bubble
+                document.getElementById('aiChatTypingIndicator').classList.add('hidden');
+                document.getElementById('aiChatTypingIndicator').classList.remove('flex');
+                
+                if(data.status === 'success') {
+                    // Update current thread session reference
+                    const isNewSession = !currentSessionId;
+                    currentSessionId = data.session_id;
+                    
+                    if(isNewSession) {
+                        loadChatSessions();
+                    }
+                    
+                    // Append AI reply
+                    appendMessageToDOM('AI', data.message, data.timestamp);
+                    scrollChatToBottom();
+                    
+                    // Dynamic suggestions update
+                    if(data.suggestions) {
+                        const suggestionsTray = document.getElementById('quickSuggestionsTray');
+                        suggestionsTray.innerHTML = '';
+                        data.suggestions.forEach(s => {
+                            const btn = document.createElement('button');
+                            btn.className = 'inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide';
+                            btn.onclick = () => submitSuggestedQuery(s);
+                            btn.innerText = s;
+                            suggestionsTray.appendChild(btn);
+                        });
+                    }
+                } else {
+                    appendMessageToDOM('AI', `⚠️ Error: ${data.message}`, getCurrentTimeStr());
+                    scrollChatToBottom();
+                }
+            })
+            .catch(() => {
+                // Hide thinking
+                document.getElementById('aiChatTypingIndicator').classList.add('hidden');
+                document.getElementById('aiChatTypingIndicator').classList.remove('flex');
+                
+                appendMessageToDOM('AI', "⚠️ Network connection interrupted. Please try again.", getCurrentTimeStr());
+                scrollChatToBottom();
+            });
+        }
+
+        // Dictate Queries hands-free via webkitSpeechRecognition API
+        let speechRecognitionObj = null;
+        let isVoiceRecording = false;
+
+        function toggleVoiceDictation() {
+            const btn = document.getElementById('voiceDictationBtn');
+            
+            if (isVoiceRecording) {
+                if(speechRecognitionObj) speechRecognitionObj.stop();
+                return;
+            }
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                showToast("Voice speech dictation is not supported by your current web browser.", "warning");
+                return;
+            }
+            
+            speechRecognitionObj = new SpeechRecognition();
+            speechRecognitionObj.continuous = false;
+            speechRecognitionObj.interimResults = false;
+            speechRecognitionObj.lang = voiceInputLanguage;
+            
+            speechRecognitionObj.onstart = function() {
+                isVoiceRecording = true;
+                btn.classList.add('pulse-record');
+                showToast(`Listening in ${voiceInputLanguage === 'ta-IN' ? 'Tamil' : 'English'}...`, 'info');
+            };
+            
+            speechRecognitionObj.onresult = function(event) {
+                const speechResult = event.results[0][0].transcript;
+                document.getElementById('aiChatInput').value = speechResult;
+                showToast('Voice transcript captured successfully!', 'success');
+            };
+            
+            speechRecognitionObj.onerror = function(event) {
+                console.error("Speech Recognition Error:", event.error);
+                showToast("Voice audio capture failed.", "error");
+                stopVoiceRecordingUI();
+            };
+            
+            speechRecognitionObj.onend = function() {
+                stopVoiceRecordingUI();
+            };
+            
+            speechRecognitionObj.start();
+        }
+
+        function stopVoiceRecordingUI() {
+            isVoiceRecording = false;
+            document.getElementById('voiceDictationBtn').classList.remove('pulse-record');
+        }
+
+        function toggleVoiceLanguage() {
+            const btn = document.getElementById('voiceLangBtn');
+            if (voiceInputLanguage === 'en-US') {
+                voiceInputLanguage = 'ta-IN';
+                btn.innerText = 'TA';
+                btn.classList.add('text-indigo-600');
+                showToast('Input language switched to Tamil (தமிழ்).', 'info');
+            } else {
+                voiceInputLanguage = 'en-US';
+                btn.innerText = 'EN';
+                btn.classList.remove('text-indigo-600');
+                showToast('Input language switched to English.', 'info');
+            }
+        }
+
+        function appendMessageToDOM(sender, text, timestamp) {
+            const chatBody = document.getElementById('aiChatBody');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'flex items-start gap-2.5 animate-slide-up';
+            
+            let avatarHTML = '';
+            let bubbleClass = '';
+            
+            if(sender === 'AI') {
+                avatarHTML = `
+                    <div class="w-7 h-7 bg-red-100 text-red-600 rounded-lg flex items-center justify-center text-xs flex-shrink-0">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                `;
+                bubbleClass = 'bg-white border border-slate-200 rounded-2xl rounded-tl-none p-3 shadow-sm max-w-[80%]';
+            } else {
+                messageDiv.classList.add('justify-end');
+                avatarHTML = '';
+                bubbleClass = 'bg-indigo-600 text-white rounded-2xl rounded-tr-none p-3 shadow-sm max-w-[80%]';
+            }
+            
+            const formattedText = parseMarkdownCustom(text, sender === 'AI');
+            
+            messageDiv.innerHTML = `
+                ${sender === 'AI' ? avatarHTML : ''}
+                <div class="${bubbleClass}">
+                    <div class="text-xs leading-relaxed break-words">${formattedText}</div>
+                    <span class="block text-[8px] text-right mt-1.5 ${sender === 'AI' ? 'text-slate-400' : 'text-indigo-200'}">${timestamp}</span>
+                </div>
+                ${sender === 'USER' ? `
+                    <div class="w-7 h-7 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center text-xs flex-shrink-0">
+                        <i class="fas fa-user"></i>
+                    </div>
+                ` : ''}
+            `;
+            
+            chatBody.appendChild(messageDiv);
+        }
+
+        function parseMarkdownCustom(text, renderTables) {
+            // Helper to sanitize & parse bullet items, tables and bold tags
+            let html = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\n/g, '<br>');
+                
+            // Parse Bold tags (**text**)
+            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            
+            // Parse Inline code (`text`)
+            html = html.replace(/`([^`]+)`/g, '<code class="bg-slate-100 text-slate-800 px-1 py-0.5 rounded font-mono text-[10px]">$1</code>');
+            
+            // Parse Markdown bullet items (* text)
+            html = html.replace(/(?:^|<br>)\s*\*\s+([^<br>]+)/g, '<li class="ml-4 list-disc text-xs">$1</li>');
+            
+            if (renderTables) {
+                // Identify markdown tables and convert them to beautifully styled HTML tables
+                // Format: | col | col | \n | :--- | :--- | \n | val | val |
+                const lines = html.split('<br>');
+                let insideTable = false;
+                let tableHTML = '';
+                
+                for(let i=0; i<lines.length; i++) {
+                    const line = lines[i].trim();
+                    if(line.startsWith('|') && line.endsWith('|')) {
+                        if(!insideTable) {
+                            insideTable = true;
+                            tableHTML = '<table class="chat-md-table">';
+                        }
+                        
+                        // Check if separator line
+                        if(line.includes(':---') || line.includes('---:')) {
+                            continue; // skip divider lines
+                        }
+                        
+                        const cells = line.split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
+                        tableHTML += '<tr>';
+                        cells.forEach(cell => {
+                            const tag = tableHTML.includes('<tr>') && !tableHTML.includes('</th>') && !line.includes('Total') && i === 0 ? 'th' : 'td';
+                            tableHTML += `<${tag} class="border border-slate-200 px-2 py-1">${cell}</${tag}>`;
+                        });
+                        tableHTML += '</tr>';
+                    } else {
+                        if(insideTable) {
+                            insideTable = false;
+                            tableHTML += '</table>';
+                            // Replace lines with single table
+                            lines[i-1] = tableHTML;
+                            tableHTML = '';
+                        }
+                    }
+                }
+                
+                html = lines.filter(l => !l.trim().startsWith('|') || l === tableHTML).join('<br>');
+            }
+            
+            return html;
+        }
+
+        function scrollChatToBottom() {
+            const chatBody = document.getElementById('aiChatBody');
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function getCurrentTimeStr() {
+            const d = new Date();
+            const hrs = String(d.getHours()).padStart(2, '0');
+            const mins = String(d.getMinutes()).padStart(2, '0');
+            return `${hrs}:${mins}`;
+        }
+        
+        // Notifications Logic
+        let isNotificationOpen = false;
+        
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notificationDropdown');
+            isNotificationOpen = !isNotificationOpen;
+            if (isNotificationOpen) {
+                dropdown.classList.remove('hidden');
+                dropdown.classList.add('block');
+                fetchNotifications();
+            } else {
+                dropdown.classList.add('hidden');
+                dropdown.classList.remove('block');
+            }
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notificationDropdown');
+            const btn = document.getElementById('notificationBtn');
+            if (isNotificationOpen && dropdown && btn && !dropdown.contains(event.target) && !btn.contains(event.target)) {
+                toggleNotificationDropdown();
+            }
+        });
+        
+        function fetchNotifications() {
+            const list = document.getElementById('notificationList');
+            const badge = document.getElementById('notificationBadge');
+            const label = document.getElementById('notificationCountLabel');
+            
+            list.innerHTML = '<div class="p-6 text-center text-slate-400"><i class="fas fa-spinner fa-spin text-xl mb-2"></i><p class="text-xs">Loading alerts...</p></div>';
+            
+            fetch('/intelligence/api/notifications/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const alerts = data.alerts;
+                        
+                        // Update counts
+                        if (alerts.length > 0) {
+                            badge.textContent = alerts.length;
+                            badge.classList.remove('hidden');
+                            label.textContent = alerts.length + ' New';
+                        } else {
+                            badge.classList.add('hidden');
+                            label.textContent = '0 New';
+                        }
+                        
+                        // Render list
+                        list.innerHTML = '';
+                        if (alerts.length === 0) {
+                            list.innerHTML = '<div class="p-6 text-center text-slate-400"><i class="fas fa-check-circle text-3xl mb-2 text-emerald-400"></i><p class="text-xs">All clear! No pending alerts.</p></div>';
+                            return;
+                        }
+                        
+                        alerts.forEach(alert => {
+                            let icon = 'fa-circle-info';
+                            let iconColor = 'text-blue-500';
+                            let bgClass = 'bg-blue-50';
+                            
+                            if (alert.type === 'LOW_STOCK' || alert.type.startsWith('RUN_OUT_')) {
+                                icon = 'fa-box-open';
+                                iconColor = 'text-orange-500';
+                                bgClass = 'bg-orange-50';
+                            } else if (alert.type === 'EXPIRED') {
+                                icon = 'fa-triangle-exclamation';
+                                iconColor = 'text-red-500';
+                                bgClass = 'bg-red-50';
+                            } else if (alert.type === 'EXPIRING_SOON') {
+                                icon = 'fa-hourglass-half';
+                                iconColor = 'text-amber-500';
+                                bgClass = 'bg-amber-50';
+                            }
+                            
+                            list.innerHTML += `
+                                <div class="p-4 border-b border-slate-50 hover:bg-slate-50 flex gap-3 items-start transition-colors cursor-pointer" onclick="window.location.href='/inventory/'">
+                                    <div class="w-8 h-8 rounded-full ${bgClass} flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <i class="fas ${icon} ${iconColor} text-xs"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-800 mb-0.5">${alert.title}</p>
+                                        <p class="text-[10px] text-slate-500 leading-relaxed">${alert.message}</p>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        list.innerHTML = '<div class="p-6 text-center text-slate-400"><p class="text-xs text-red-400">Failed to load alerts.</p></div>';
+                    }
+                })
+                .catch(err => {
+                    list.innerHTML = '<div class="p-6 text-center text-slate-400"><p class="text-xs text-red-400">Network error.</p></div>';
+                });
+        }
+        
+        // Initial fetch on page load to set badge count
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                fetch('/intelligence/api/notifications/')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success' && data.count > 0) {
+                            const badge = document.getElementById('notificationBadge');
+                            if(badge) {
+                                badge.textContent = data.count;
+                                badge.classList.remove('hidden');
+                                document.getElementById('notificationCountLabel').textContent = data.count + ' New';
+                            }
+                        }
+                    }).catch(e => {});
+            }, 1000);
         });
     </script>
 </body>

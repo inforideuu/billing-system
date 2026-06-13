@@ -5,9 +5,10 @@ Follow these simple steps to run this Django project on your system using VS Cod
 ## Prerequisites
 1. Make sure **Python** is installed on your computer.
 2. Make sure your local database server is running:
+   - Type: PostgreSQL
    - Name: `retail_billing_db`
-   - User: `root`
-   - Password: `root`
+   - User: `postgres`
+   - Password: `annamalai238`
 
 ---
 
@@ -35,7 +36,7 @@ venv\Scripts\activate.bat
 ### 4. Install Dependencies
 Ensure required packages (including new ones like Pillow) are up to date:
 ```bash
-pip install django pymysql cryptography pillow sqlparse
+pip install django psycopg2-binary cryptography pillow sqlparse
 ```
 
 ### 5. Apply Database Migrations (Optional but Recommended)

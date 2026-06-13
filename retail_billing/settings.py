@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'core',
     'inventory',
     'billing',
+    'intelligence',
 ]
 
 MIDDLEWARE = [
@@ -93,14 +94,16 @@ DB_NAME = os.environ.get('DB_NAME')
 DB_USER = os.environ.get('DB_USER')
 DB_PASSWORD = os.environ.get('DB_PASSWORD')
 DB_HOST = os.environ.get('DB_HOST')
-DB_PORT = os.environ.get('DB_PORT', '3306')
+DB_PORT = os.environ.get('DB_PORT', '5432')
 
 db_configured = False
 
-if DATABASE_URL and DATABASE_URL.startswith('mysql://'):
+# Parse postgres:// or postgresql:// URL
+if DATABASE_URL and (DATABASE_URL.startswith('postgres://') or DATABASE_URL.startswith('postgresql://')):
     try:
-        # Parse mysql://user:password@host:port/dbname
-        url = DATABASE_URL[8:]
+        # Parse postgres(ql)://user:password@host:port/dbname
+        prefix = 'postgresql://' if DATABASE_URL.startswith('postgresql://') else 'postgres://'
+        url = DATABASE_URL[len(prefix):]
         if '@' in url:
             credentials, location = url.split('@', 1)
             user, password = credentials.split(':', 1)
@@ -112,72 +115,60 @@ if DATABASE_URL and DATABASE_URL.startswith('mysql://'):
                     host, port = host_port.split(':', 1)
                 else:
                     host = host_port
-                    port = '3306'
+                    port = '5432'
                 
                 DATABASES = {
                     'default': {
-                        'ENGINE': 'django.db.backends.mysql',
+                        'ENGINE': 'django.db.backends.postgresql',
                         'NAME': db_name,
                         'USER': user,
                         'PASSWORD': password,
                         'HOST': host,
                         'PORT': port,
-                        'OPTIONS': {
-                            'charset': 'utf8mb4',
-                            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-                        },
                     }
                 }
                 db_configured = True
-                print("[Database] Using production/cloud MySQL database parsed from DATABASE_URL.")
+                print("[Database] Using production/cloud PostgreSQL database parsed from DATABASE_URL.")
     except Exception as e:
         print(f"[Database Error] Failed to parse DATABASE_URL: {str(e)}")
 
 if not db_configured and DB_NAME and DB_USER and DB_PASSWORD and DB_HOST:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': DB_NAME,
             'USER': DB_USER,
             'PASSWORD': DB_PASSWORD,
             'HOST': DB_HOST,
             'PORT': DB_PORT,
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            },
         }
     }
     db_configured = True
-    print("[Database] Using production/cloud MySQL database from individual DB_* environment variables.")
+    print("[Database] Using production/cloud PostgreSQL database from individual DB_* environment variables.")
 
 if not db_configured:
-    def _is_mysql_active():
+    def _is_postgres_active():
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(0.5) # Super fast check
         try:
-            s.connect(('localhost', 3306))
+            s.connect(('127.0.0.1', 5432))
             s.close()
             return True
         except Exception:
             return False
 
-    if _is_mysql_active():
+    if _is_postgres_active():
         DATABASES = {
             'default': {
-                'ENGINE': 'django.db.backends.mysql',
+                'ENGINE': 'django.db.backends.postgresql',
                 'NAME': 'retail_billing_db',
-                'USER': 'root',
-                'PASSWORD': 'root',
-                'HOST': 'localhost',
-                'PORT': '3306',
-                'OPTIONS': {
-                    'charset': 'utf8mb4',
-                    'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-                },
+                'USER': 'postgres',
+                'PASSWORD': 'annamalai238',
+                'HOST': '127.0.0.1',
+                'PORT': '5432',
             }
         }
-        print("[Database] Converted successfully to local MySQL server.")
+        print("[Database] Connected successfully to local PostgreSQL server.")
     else:
         DATABASES = {
             'default': {
@@ -185,7 +176,8 @@ if not db_configured:
                 'NAME': BASE_DIR / 'db.sqlite3',
             }
         }
-        print("[Database Warning] Local MySQL server at 3306 is unreachable. Falling back to local SQLite database for seamless operation.")
+        print("[Database Warning] Local PostgreSQL server at 5432 is unreachable. Falling back to local SQLite database for seamless operation.")
+
 
 
 # Password validation
@@ -252,7 +244,11 @@ LOGIN_URL = '/accounts/login/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 # Email Configurations
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'billing@zenelait.com' # Replace with your actual email
+EMAIL_HOST_PASSWORD = '' # Replace with your App Password
 DEFAULT_FROM_EMAIL = 'billing@zenelait.com'
-EMAIL_HOST_USER = 'billing@zenelait.com'
 

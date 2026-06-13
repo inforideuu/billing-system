@@ -303,7 +303,103 @@ const translations = {
         'January': 'January', 'February': 'February', 'March': 'March', 'April': 'April',
         'May': 'May', 'June': 'June', 'July': 'July', 'August': 'August',
         'September': 'September', 'October': 'October', 'November': 'November', 'December': 'December',
-        'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar', 'Apr': 'Apr', 'Jun': 'Jun', 'Jul': 'Jul', 'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov', 'Dec': 'Dec'
+        'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar', 'Apr': 'Apr', 'Jun': 'Jun', 'Jul': 'Jul', 'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov', 'Dec': 'Dec',
+
+        // Insights / Intelligence App Additional Words
+        'Settings': 'Settings',
+        'Smart Insights & Predictions': 'Smart Insights & Predictions',
+        'Shop Operations Intelligence': 'Shop Operations Intelligence',
+        'Real-time alerts, sales trajectory trends, inventory velocity, and demand forecasts.': 'Real-time alerts, sales trajectory trends, inventory velocity, and demand forecasts.',
+        'Manage Batches': 'Manage Batches',
+        'Operations Alert Feed': 'Operations Alert Feed',
+        'All operations are running smoothly. No active alerts found!': 'All operations are running smoothly. No active alerts found!',
+        'Sales Performance Trajectory': 'Sales Performance Trajectory',
+        'Total revenue collected this calendar month.': 'Total revenue collected this calendar month.',
+        'Last Month': 'Last Month',
+        'Stable': 'Stable',
+        'Top Selling Items': 'Top Selling Items',
+        'No sales recorded in the last 30 days.': 'No sales recorded in the last 30 days.',
+        'Slow-Moving Stock': 'Slow-Moving Stock',
+        'No slow-moving products. Inventory moving quickly!': 'No slow-moving products. Inventory moving quickly!',
+        'Dead Stock Alerts': 'Dead Stock Alerts',
+        'No dead stock recorded. Healthy product cycle.': 'No dead stock recorded. Healthy product cycle.',
+        'Demand Forecast & Restocking Guide': 'Demand Forecast & Restocking Guide',
+        'Product Name': 'Product Name',
+        'Avg Daily Sales': 'Avg Daily Sales',
+        'Expected next Week': 'Expected next Week',
+        'Expected next Month': 'Expected next Month',
+        'Current Stock': 'Current Stock',
+        'Suggested Restock': 'Suggested Restock',
+        'Demand Tag': 'Demand Tag',
+        'No physical products found in the catalog to forecast demand.': 'No physical products found in the catalog to forecast demand.',
+        'Actual vs. Forecasted Weekly Demand Trend': 'Actual vs. Forecasted Weekly Demand Trend',
+        'Actual Weekly Demand': 'Actual Weekly Demand',
+        'Forecasted Weekly Demand': 'Forecasted Weekly Demand',
+        'Current Week': 'Current Week',
+        'Sufficient': 'Sufficient',
+        'High Velocity': 'High Velocity',
+        'Normal': 'Normal',
+        'Stock depletion alert': 'Stock depletion alert',
+        'Low stock warning': 'Low stock warning',
+        'Expired inventory': 'Expired inventory',
+        'Expiry warning': 'Expiry warning',
+        'Sales performance warning': 'Sales performance warning',
+        'Smart Insights & Forecasting | Retail Billing': 'Smart Insights & Forecasting | Retail Billing',
+        'Weekly Demand Trend': 'Weekly Demand Trend',
+        'Weekly Demand': 'Weekly Demand',
+        'Sold': 'Sold',
+        'Sold (30d)': 'Sold (30d)',
+        'Stock:': 'Stock:',
+        'Value:': 'Value:',
+        'Batch & Expiry Management | Retail Billing': 'Batch & Expiry Management | Retail Billing',
+        'Batch & Expiry Tracking': 'Batch & Expiry Tracking',
+        'Active Batches': 'Active Batches',
+        'Expired Batches': 'Expired Batches',
+        'Expiring Soon': 'Expiring Soon',
+        'Add New Batch': 'Add New Batch',
+        'Search batch number or SKU...': 'Search batch number or SKU...',
+        'Pricing and checkout automatically select oldest unexpired batches first.': 'Pricing and checkout automatically select oldest unexpired batches first.',
+        'Batch Number': 'Batch Number',
+        'Mfg Date': 'Mfg Date',
+        'Expiry Date': 'Expiry Date',
+        'Sold Out': 'Sold Out',
+        'Healthy': 'Healthy',
+        'Delete Batch': 'Delete Batch',
+        'Are you sure you want to remove batch': 'Are you sure you want to remove batch',
+        'This will adjust the product\'s overall stock quantity accordingly.': 'This will adjust the product\'s overall stock quantity accordingly.',
+        'Register Inventory Batch': 'Register Inventory Batch',
+        'Select Product': 'Select Product',
+        '-- Select Product --': '-- Select Product --',
+        'Mfg Date (Optional)': 'Mfg Date (Optional)',
+        'Initial Batch Stock Quantity': 'Initial Batch Stock Quantity',
+        'Save Batch': 'Save Batch',
+        'No batches currently loaded. Register a batch during purchase entries or click "Add New Batch".': 'No batches currently loaded. Register a batch during purchase entries or click "Add New Batch".',
+        'Intelligence Settings | Retail Billing': 'Intelligence Settings | Retail Billing',
+        'Intelligence & Dynamic Pricing Settings': 'Intelligence & Dynamic Pricing Settings',
+        'Advanced Control Panel': 'Advanced Control Panel',
+        'Enable features, modify alert thresholds, and customize dynamic pricing rules.': 'Enable features, modify alert thresholds, and customize dynamic pricing rules.',
+        'Email Alert Digest Now': 'Email Alert Digest Now',
+        'Save Configurations': 'Save Configurations',
+        'Active Modules': 'Active Modules',
+        'Calculates average daily sales velocity, predicts product stock-out dates, and warns about dead stock.': 'Calculates average daily sales velocity, predicts product stock-out dates, and warns about dead stock.',
+        'Demand Forecasting': 'Demand Forecasting',
+        'Predicts sales for next week and next month using historical sales data and weighted trends, then suggests restocking amounts.': 'Predicts sales for next week and next month using historical sales data and weighted trends, then suggests restocking amounts.',
+        'Dynamic Pricing System': 'Dynamic Pricing System',
+        'Automatically adjusts prices in the POS catalog based on low stock quantities, high sales demand levels, and near-expiry clearance rules.': 'Automatically adjusts prices in the POS catalog based on low stock quantities, high sales demand levels, and near-expiry clearance rules.',
+        'Operation Thresholds': 'Operation Thresholds',
+        'Alerts dashboard and triggers low stock price markup when stock drops below this value.': 'Alerts dashboard and triggers low stock price markup when stock drops below this value.',
+        'Expiry Alert Threshold (Days)': 'Expiry Alert Threshold (Days)',
+        'Generates warning alerts and applies clearance discount rules when a batch is within this expiry window.': 'Generates warning alerts and applies clearance discount rules when a batch is within this expiry window.',
+        'Dynamic Pricing Rules (%)': 'Dynamic Pricing Rules (%)',
+        'Increases pricing by this percentage when product stock is below your low stock threshold.': 'Increases pricing by this percentage when product stock is below your low stock threshold.',
+        'Increases base price when average sales exceed 1.5 units per day over the last 7 days.': 'Increases base price when average sales exceed 1.5 units per day over the last 7 days.',
+        'Deducts this percentage from standard pricing when the active stock batch is expiring soon.': 'Deducts this percentage from standard pricing when the active stock batch is expiring soon.',
+        'Admin (Shop Owner)': 'Admin (Shop Owner)',
+        'SHOP OWNER': 'SHOP OWNER',
+        'Insights': 'Insights',
+        'Batches': 'Batches',
+        'units': 'units',
+        'Units': 'Units'
     },
     'TA': {
         // Base / Sidebar / Navbar
@@ -545,7 +641,104 @@ const translations = {
         'January': 'ஜனவரி', 'February': 'பிப்ரவரி', 'March': 'மார்ச்', 'April': 'ஏப்ரல்',
         'May': 'மே', 'June': 'ஜூன்', 'July': 'ஜூலை', 'August': 'ஆகஸ்ட்',
         'September': 'செப்டம்பர்', 'October': 'அக்டோபர்', 'November': 'நவம்பர்', 'December': 'டிசம்பர்',
-        'Jan': 'ஜன', 'Feb': 'பிப்', 'Mar': 'மார்', 'Apr': 'ஏப்', 'Jun': 'ஜூன்', 'Jul': 'ஜூலை', 'Aug': 'ஆக', 'Sep': 'செப்', 'Oct': 'அக்', 'Nov': 'நவ', 'Dec': 'டிச'
+        'Jan': 'ஜன', 'Feb': 'பிப்', 'Mar': 'மார்', 'Apr': 'ஏப்', 'Jun': 'ஜூன்', 'Jul': 'ஜூலை', 'Aug': 'ஆக', 'Sep': 'செப்', 'Oct': 'அக்', 'Nov': 'நவ', 'Dec': 'டிச',
+
+        // Insights / Intelligence App Additional Words Tamil
+        'Settings': 'அமைப்புகள்',
+        'Smart Insights & Predictions': 'புத்திசாலித்தனமான நுண்ணறிவு & கணிப்புகள்',
+        'Shop Operations Intelligence': 'கடை செயல்பாடுகள் நுண்ணறிவு',
+        'Real-time alerts, sales trajectory trends, inventory velocity, and demand forecasts.': 'நிகழ்நேர விழிப்பூட்டல்கள், விற்பனைப் போக்குகள், சரக்கு வேகம் மற்றும் தேவை கணிப்புகள்.',
+        'Manage Batches': 'தொகுதிகளை நிர்வகி',
+        'Operations Alert Feed': 'செயல்பாட்டு விழிப்பூட்டல் ஊட்டம்',
+        'All operations are running smoothly. No active alerts found!': 'அனைத்து செயல்பாடுகளும் சீராக இயங்குகின்றன. செயலில் உள்ள விழிப்பூட்டல்கள் எதுவும் இல்லை!',
+        'Sales Performance Trajectory': 'விற்பனை செயல்திறன் தடம்',
+        'Total revenue collected this calendar month.': 'இந்த நடப்பு மாதத்தில் வசூலிக்கப்பட்ட மொத்த வருவாய்.',
+        'Last Month': 'கடந்த மாதம்',
+        'Stable': 'நிலையானது',
+        'Top Selling Items': 'அதிகம் விற்பனையாகும் பொருட்கள்',
+        'No sales recorded in the last 30 days.': 'கடந்த 30 நாட்களில் விற்பனை எதுவும் பதிவு செய்யப்படவில்லை.',
+        'Slow-Moving Stock': 'மெதுவாக நகரும் இருப்பு',
+        'No slow-moving products. Inventory moving quickly!': 'மெதுவாக நகரும் தயாரிப்புகள் எதுவும் இல்லை. சரக்கு வேகமாக நகர்கிறது!',
+        'Dead Stock Alerts': 'தேக்கமடைந்த இருப்பு விழிப்பூட்டல்கள்',
+        'No dead stock recorded. Healthy product cycle.': 'தேக்கமடைந்த இருப்பு எதுவும் இல்லை. ஆரோக்கியமான தயாரிப்பு சுழற்சி.',
+        'Demand Forecast & Restocking Guide': 'தேவை கணிப்பு & மறுமதிப்பீட்டு வழிகாட்டி',
+        'Product Name': 'தயாரிப்பு பெயர்',
+        'Avg Daily Sales': 'சராசரி தினசரி விற்பனை',
+        'Expected next Week': 'அடுத்த வாரம் எதிர்பார்க்கப்படுகிறது',
+        'Expected next Month': 'அடுத்த மாதம் எதிர்பார்க்கப்படுகிறது',
+        'Current Stock': 'தற்போதைய இருப்பு',
+        'Suggested Restock': 'பரிந்துரைக்கப்பட்ட மறுமதிப்பீடு',
+        'Demand Tag': 'தேவை குறிச்சொல்',
+        'No physical products found in the catalog to forecast demand.': 'தேவையை கணிக்க இருப்புப் பட்டியலில் உடல் தயாரிப்புகள் எதுவும் இல்லை.',
+        'Actual vs. Forecasted Weekly Demand Trend': 'உண்மையான மற்றும் கணிக்கப்பட்ட வாராந்திர தேவைப் போக்கு',
+        'Actual Weekly Demand': 'உண்மையான வாராந்திர தேவை',
+        'Forecasted Weekly Demand': 'கணிக்கப்பட்ட வாராந்திர தேவை',
+        'Current Week': 'நடப்பு வாரம்',
+        'Sufficient': 'போதுமானது',
+        'High Velocity': 'அதிவேகம்',
+        'Normal': 'சாதாரணமானது',
+        'Stock depletion alert': 'இருப்பு குறைப்பு விழிப்பூட்டல்',
+        'Low stock warning': 'குறைந்த இருப்பு எச்சரிக்கை',
+        'Expired inventory': 'காலாவதியான இருப்பு',
+        'Expiry warning': 'காலாவதி எச்சரிக்கை',
+        'Sales performance warning': 'விற்பனை செயல்திறன் எச்சரிக்கை',
+        'Smart Insights & Forecasting | Retail Billing': 'புத்திசாலித்தனமான நுண்ணறிவு & கணிப்பு | சில்லறை பில்லிங்',
+        'Weekly Demand Trend': 'வாராந்திர தேவைப் போக்கு',
+        'Weekly Demand': 'வாராந்திர தேவை',
+        'Sold': 'விற்கப்பட்டது',
+        'Sold (30d)': 'விற்கப்பட்டது (30நாட்கள்)',
+        'Stock:': 'இருப்பு:',
+        'Value:': 'மதிப்பு:',
+        'Batch & Expiry Management | Retail Billing': 'தொகுதி & காலாவதி மேலாண்மை | சில்லறை பில்லிங்',
+        'Batch & Expiry Tracking': 'தொகுதி & காலாவதி கண்காணிப்பு',
+        'Active Batches': 'செயலில் உள்ள தொகுதிகள்',
+        'Expired Batches': 'காலாவதியான தொகுதிகள்',
+        'Expiring Soon': 'விரைவில் காலாவதியாகிறது',
+        'Add New Batch': 'புதிய தொகுதியைச் சேர்',
+        'Search batch number or SKU...': 'தொகுதி எண் அல்லது SKU மூலம் தேடு...',
+        'Pricing and checkout automatically select oldest unexpired batches first.': 'பில்லிங் மற்றும் செக்அவுட் தானாகவே பழமையான காலாவதியாகாத தொகுதிகளை முதலில் தேர்ந்தெடுக்கும்.',
+        'Batch Number': 'தொகுதி எண்',
+        'Mfg Date': 'தயாரிப்பு தேதி',
+        'Expiry Date': 'காலாவதி தேதி',
+        'Sold Out': 'முழுவதும் விற்கப்பட்டது',
+        'Healthy': 'ஆரோக்கியமானது',
+        'Delete Batch': 'தொகுதியை நீக்கு',
+        'Are you sure you want to remove batch': 'தொகுதியை நீக்க விரும்புகிறீர்களா',
+        'This will adjust the product\'s overall stock quantity accordingly.': 'இது தயாரிப்பின் மொத்த இருப்பு அளவை அதற்கேற்ப சரிசெய்யும்.',
+        'Register Inventory Batch': 'சரக்கு தொகுதியை பதிவு செய்',
+        'Select Product': 'தயாரிப்பைத் தேர்ந்தெடு',
+        '-- Select Product --': '-- தயாரிப்பைத் தேர்ந்தெடு --',
+        'Mfg Date (Optional)': 'தயாரிப்பு தேதி (விருப்பத்தேர்வு)',
+        'Initial Batch Stock Quantity': 'ஆரம்ப தொகுதி இருப்பு அளவு',
+        'Save Batch': 'தொகுதியைச் சேமி',
+        'No batches currently loaded. Register a batch during purchase entries or click "Add New Batch".': 'தற்போது தொகுதிகள் எதுவும் இல்லை. கொள்முதல் பதிவுகளின் போது தொகுதியை பதிவு செய்யவும் அல்லது "புதிய தொகுதியைச் சேர்" என்பதைக் கிளிக் செய்யவும்.',
+        'Intelligence Settings | Retail Billing': 'நுண்ணறிவு அமைப்புகள் | சில்லறை பில்லிங்',
+        'Intelligence & Dynamic Pricing Settings': 'நுண்ணறிவு & மாறும் விலை அமைப்புகள்',
+        'Advanced Control Panel': 'மேம்பட்ட கட்டுப்பாட்டு பலகை',
+        'Enable features, modify alert thresholds, and customize dynamic pricing rules.': 'அம்சங்களைச் செயல்படுத்தவும், எச்சரிக்கை வரம்புகளை மாற்றவும் மற்றும் மாறும் விலை விதிகளைத் தனிப்பயனாக்கவும்.',
+        'Email Alert Digest Now': 'இப்போது மின்னஞ்சல் எச்சரிக்கை சுருக்கத்தை அனுப்பு',
+        'Save Configurations': 'அமைப்புகளைச் சேமி',
+        'Active Modules': 'செயலில் உள்ள தொகுதிகள்',
+        'Calculates average daily sales velocity, predicts product stock-out dates, and warns about dead stock.': 'தினசரி சராசரி விற்பனை வேகத்தைக் கணக்கிடுகிறது, தயாரிப்பு இருப்பு காலியாகும் தேதிகளைக் கணித்து, தேக்கமடைந்த இருப்பைப் பற்றி எச்சரிக்கிறது.',
+        'Demand Forecasting': 'தேவை கணிப்பு',
+        'Predicts sales for next week and next month using historical sales data and weighted trends, then suggests restocking amounts.': 'வரலாற்று விற்பனை தரவு மற்றும் எடையுள்ள போக்குகளைப் பயன்படுத்தி அடுத்த வாரம் மற்றும் அடுத்த மாதத்திற்கான விற்பனையைக் கணிக்கிறது, பின்னர் இருப்பு நிரப்புதல் அளவுகளைப் பரிந்துரைக்கிறது.',
+        'Dynamic Pricing System': 'மாறும் விலை முறைமை',
+        'Automatically adjusts prices in the POS catalog based on low stock quantities, high sales demand levels, and near-expiry clearance rules.': 'குறைந்த இருப்பு அளவுகள், அதிக விற்பனைத் தேவை நிலைகள் மற்றும் காலாவதியாகும் நிலை ஆகியவற்றின் அடிப்படையில் POS பட்டியலில் விலைகளை தானாகவே சரிசெய்கிறது.',
+        'Operation Thresholds': 'செயல்பாட்டு வரம்புகள்',
+        'Low Stock Threshold': 'குறைந்த இருப்பு வரம்பு',
+        'Alerts dashboard and triggers low stock price markup when stock drops below this value.': 'இருப்பு இந்த மதிப்புக்கு கீழே குறையும் போது கட்டுப்பாட்டு பலகையை எச்சரிக்கிறது மற்றும் குறைந்த இருப்பு விலை உயர்வை இயக்குகிறது.',
+        'Expiry Alert Threshold (Days)': 'காலாவதி எச்சரிக்கை வரம்பு (நாட்கள்)',
+        'Generates warning alerts and applies clearance discount rules when a batch is within this expiry window.': 'ஒரு தொகுதி இந்த காலாவதி சாளரத்திற்குள் இருக்கும்போது எச்சரிக்கைகளை உருவாக்குகிறது மற்றும் தள்ளுபடி விதிகளைப் பயன்படுத்துகிறது.',
+        'Dynamic Pricing Rules (%)': 'மாறும் விலை விதிகள் (%)',
+        'Increases pricing by this percentage when product stock is below your low stock threshold.': 'தயாரிப்பு இருப்பு உங்கள் குறைந்த இருப்பு வரம்பிற்கு கீழே இருக்கும்போது இந்த சதவீதத்தால் விலையை அதிகரிக்கிறது.',
+        'Increases base price when average sales exceed 1.5 units per day over the last 7 days.': 'கடந்த 7 நாட்களில் சராசரி விற்பனை ஒரு நாளைக்கு 1.5 அலகுகளைத் தாண்டும்போது அடிப்படை விலையை அதிகரிக்கிறது.',
+        'Deducts this percentage from standard pricing when the active stock batch is expiring soon.': 'செயலில் உள்ள இருப்பு தொகுதி விரைவில் காலாவதியாகும் போது நிலையான விலையிலிருந்து இந்த சதவீதத்தைக் கழிக்கிறது.',
+        'Admin (Shop Owner)': 'நிர்வாகி (கடை உரிமையாளர்)',
+        'SHOP OWNER': 'கடை உரிமையாளர்',
+        'Insights': 'நுண்ணறிவு',
+        'Batches': 'தொகுதிகள்',
+        'units': 'அலகுகள்',
+        'Units': 'அலகுகள்'
     }
 };
 
@@ -589,6 +782,36 @@ function translateDOM() {
                 if (text.includes(key)) {
                     console.log('[Translation Engine] Match found! Replacing "' + key + '" with "' + taDict[key] + '"');
                     text = text.split(key).join(taDict[key]);
+                }
+            }
+            
+            // Dynamic alert matching for Operations Feed
+            // 1. Expired warning
+            if (text.includes("expired on")) {
+                const match = text.match(/\s*Batch\s+'([^']+)'\s+of\s+'([^']+)'\s+expired\s+on\s+([^!]+)!\s*/);
+                if (match) {
+                    text = `தொகுதி '${match[1]}' (தயாரிப்பு: '${match[2]}') ${match[3]} அன்று காலாவதியானது!`;
+                }
+            }
+            // 2. Expiring soon
+            if (text.includes("expires in")) {
+                const match = text.match(/\s*Batch\s+'([^']+)'\s+of\s+'([^']+)'\s+expires\s+in\s+(\d+)\s+days\s+\(([^)]+)\)\.\s*/);
+                if (match) {
+                    text = `தொகுதி '${match[1]}' (தயாரிப்பு: '${match[2]}') ${match[3]} நாட்களில் (${match[4]}) காலாவதியாகிறது.`;
+                }
+            }
+            // 3. Stock runout prediction
+            if (text.includes("will run out in approximately")) {
+                const match = text.match(/\s*Product\s+'([^']+)'\s+will\s+run\s+out\s+in\s+approximately\s+(\d+)\s+days\s+based\s+on\s+sales\s+velocity\.\s*/);
+                if (match) {
+                    text = `தயாரிப்பு '${match[1]}' விற்பனை வேகத்தின் அடிப்படையில் சுமார் ${match[2]} நாட்களில் தீர்ந்துவிடும்.`;
+                }
+            }
+            // 4. Low stock
+            if (text.includes("is below low stock threshold")) {
+                const match = text.match(/\s*Product\s+'([^']+)'\s+is\s+below\s+low\s+stock\s+threshold\.\s+Current\s+stock:\s+(\d+)\.\s*/);
+                if (match) {
+                    text = `தயாரிப்பு '${match[1]}' குறைந்த இருப்பு வரம்பிற்குக் கீழே உள்ளது. தற்போதைய இருப்பு: ${match[2]}.`;
                 }
             }
         } else {
