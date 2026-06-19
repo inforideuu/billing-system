@@ -10,7 +10,7 @@ from django.utils.html import strip_tags
 from django.conf import settings
 from django.utils import timezone
 from core.utils import filter_by_business, get_business
-from core.decorators import role_required
+from core.decorators import role_required, plan_feature_required
 from .models import Customer, Invoice, InvoiceItem, FestivalOffer
 from django.contrib import messages
 from django.shortcuts import redirect
@@ -206,6 +206,7 @@ def view_invoice(request, pk):
 
 @login_required(login_url='/accounts/login/')
 @role_required(['ADMIN'])
+@plan_feature_required('has_festival_offers')
 def manage_festival_offers(request):
     business = get_business(request)
     if request.method == 'POST':
@@ -223,6 +224,7 @@ def manage_festival_offers(request):
 
 @login_required(login_url='/accounts/login/')
 @role_required(['ADMIN'])
+@plan_feature_required('has_festival_offers')
 def add_festival_offer(request):
     business = get_business(request)
     if request.method == 'POST':
@@ -269,6 +271,7 @@ def add_festival_offer(request):
 
 @login_required(login_url='/accounts/login/')
 @role_required(['ADMIN'])
+@plan_feature_required('has_festival_offers')
 def delete_festival_offer(request, pk):
     offer = get_object_or_404(FestivalOffer, pk=pk, business=get_business(request))
     name = offer.name

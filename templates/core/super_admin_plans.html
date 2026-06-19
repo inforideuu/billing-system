@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Subscription Plans | Super Admin{% endblock %}
+{% block page_title %}Plans & Tiers Command Center{% endblock %}
+
+{% block content %}
+<!-- Hero Banner -->
+<div class="glass-card relative overflow-hidden p-8 rounded-3xl mb-8 border border-white/50 shadow-xl animate-slide-up group">
+    <div class="absolute -right-20 -top-20 w-64 h-64 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
+    
+    <div class="flex flex-col md:flex-row justify-between items-center gap-8 relative z-10">
+        <div class="text-center md:text-left">
+            <span class="inline-block px-4 py-1.5 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold uppercase tracking-wider mb-3">
+                Super Admin Console
+            </span>
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">
+                Subscription Plans <span class="inline-block">💎</span>
+            </h1>
+            <p class="text-slate-600 mt-2 font-medium text-sm max-w-lg">
+                Create, modify, and delete subscription tiers. Dynamic changes will apply immediately to new and renewing businesses.
+            </p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'super_admin_dashboard' %}" class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-50 transition-all text-sm">
+                <i class="fas fa-arrow-left"></i> Dashboard
+            </a>
+            <a href="{% url 'add_plan' %}" class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl shadow-md shadow-indigo-600/20 font-bold flex items-center gap-2 hover:scale-105 transition-all text-sm">
+                <i class="fas fa-plus"></i> Add New Plan
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Plans Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 animate-slide-up delay-100">
+    {% for plan in plans %}
+    <div class="glass-card rounded-3xl border border-slate-100 hover:border-indigo-300 transition-all p-8 shadow-sm hover:shadow-lg relative flex flex-col justify-between overflow-hidden">
+        <div class="absolute -right-16 -top-16 w-36 h-36 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none"></div>
+        
+        <div>
+            <div class="mb-6 border-b border-slate-100 pb-4">
+                <h3 class="font-extrabold text-2xl text-slate-800 tracking-tight mb-2">{{ plan.name }}</h3>
+                <div class="grid grid-cols-3 gap-2 text-center text-xs font-bold mt-2">
+                    <div class="bg-indigo-50 p-2 rounded-xl text-indigo-700">
+                        <span class="block text-[9px] uppercase text-indigo-400">3 Months</span>
+                        <span>₹{{ plan.price_3_months }}</span>
+                    </div>
+                    <div class="bg-violet-50 p-2 rounded-xl text-violet-700">
+                        <span class="block text-[9px] uppercase text-violet-400">6 Months</span>
+                        <span>₹{{ plan.price_6_months }}</span>
+                    </div>
+                    <div class="bg-purple-50 p-2 rounded-xl text-purple-700">
+                        <span class="block text-[9px] uppercase text-purple-400">1 Year</span>
+                        <span>₹{{ plan.price_year }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="text-slate-600 text-sm font-medium mb-6 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
+                {{ plan.description|default:"No description provided for this plan." }}
+            </p>
+            
+            <div class="space-y-3.5 mb-8">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-500 font-medium"><i class="fas fa-users-cog text-slate-400 mr-2"></i> Cashier Limit</span>
+                    <span class="font-bold text-slate-800">
+                        {% if plan.max_cashiers == -1 %}Unlimited{% else %}{{ plan.max_cashiers }}{% endif %}
+                    </span>
+                </div>
+                
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-500 font-medium"><i class="fas fa-percentage text-slate-400 mr-2"></i> Festival Offers</span>
+                    <span class="font-bold">
+                        {% if plan.has_festival_offers %}
+                        <i class="fas fa-check-circle text-emerald-500 text-lg"></i>
+                        {% else %}
+                        <i class="fas fa-times-circle text-slate-300 text-lg"></i>
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-500 font-medium"><i class="fas fa-boxes text-slate-400 mr-2"></i> Batch Tracking</span>
+                    <span class="font-bold">
+                        {% if plan.has_batch_tracking %}
+                        <i class="fas fa-check-circle text-emerald-500 text-lg"></i>
+                        {% else %}
+                        <i class="fas fa-times-circle text-slate-300 text-lg"></i>
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-500 font-medium"><i class="fas fa-chart-line text-slate-400 mr-2"></i> Advanced Reports</span>
+                    <span class="font-bold">
+                        {% if plan.has_advanced_reports %}
+                        <i class="fas fa-check-circle text-emerald-500 text-lg"></i>
+                        {% else %}
+                        <i class="fas fa-times-circle text-slate-300 text-lg"></i>
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-500 font-medium"><i class="fas fa-brain text-slate-400 mr-2"></i> Smart Insights (AI)</span>
+                    <span class="font-bold">
+                        {% if plan.has_smart_insights %}
+                        <i class="fas fa-check-circle text-emerald-500 text-lg"></i>
+                        {% else %}
+                        <i class="fas fa-times-circle text-slate-300 text-lg"></i>
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-500 font-medium"><i class="fas fa-chart-bar text-slate-400 mr-2"></i> Demand Forecasting</span>
+                    <span class="font-bold">
+                        {% if plan.has_forecasting %}
+                        <i class="fas fa-check-circle text-emerald-500 text-lg"></i>
+                        {% else %}
+                        <i class="fas fa-times-circle text-slate-300 text-lg"></i>
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-500 font-medium"><i class="fas fa-tags text-slate-400 mr-2"></i> Dynamic Pricing</span>
+                    <span class="font-bold">
+                        {% if plan.has_dynamic_pricing %}
+                        <i class="fas fa-check-circle text-emerald-500 text-lg"></i>
+                        {% else %}
+                        <i class="fas fa-times-circle text-slate-300 text-lg"></i>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex gap-2 pt-4 border-t border-slate-100 mt-4">
+            <a href="{% url 'edit_plan' plan.id %}" class="flex-1 text-center py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-colors">
+                <i class="fas fa-edit"></i> Edit Details
+            </a>
+            <a href="{% url 'delete_plan' plan.id %}" class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl font-bold text-xs transition-colors text-center" onclick="return confirm('Are you sure you want to delete this plan? This operation cannot be undone.')">
+                <i class="fas fa-trash-alt"></i>
+            </a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full glass-card py-16 text-center text-slate-400 flex flex-col items-center justify-center">
+        <div class="w-16 h-16 rounded-full bg-slate-50 text-slate-300 flex items-center justify-center mb-3 text-3xl">
+            <i class="fas fa-cubes"></i>
+        </div>
+        <h3 class="text-lg font-bold text-slate-700">No Plans Created</h3>
+        <p class="text-sm max-w-sm mt-1 mb-6 text-slate-500">Create your first subscription tier with custom feature flags.</p>
+        <a href="{% url 'add_plan' %}" class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold text-sm">
+            Create Plan
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

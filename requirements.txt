@@ -11,3 +11,4 @@ waitress==3.0.2
 firebase-functions
 functions-framework
 whitenoise==6.8.2
+razorpay

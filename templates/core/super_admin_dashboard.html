@@ -21,14 +21,43 @@
                 Manage active businesses, grant/revoke licenses, configure modules, and view system-wide performance metrics.
             </p>
         </div>
-        <button onclick="toggleModal('addBusinessModal')" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-lg shadow-indigo-600/30 font-semibold flex items-center gap-2 hover:scale-105 hover:shadow-indigo-600/40 transition-all">
-            <i class="fas fa-plus"></i> Add New Business
-        </button>
+        <div class="flex gap-3">
+            <a href="{% url 'super_admin_plans' %}" class="px-5 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-50 transition-all text-sm">
+                <i class="fas fa-gem text-indigo-500"></i> Manage Plans
+            </a>
+            <button onclick="toggleModal('addBusinessModal')" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-lg shadow-indigo-600/30 font-semibold flex items-center gap-2 hover:scale-105 hover:shadow-indigo-600/40 transition-all">
+                <i class="fas fa-plus"></i> Add New Business
+            </button>
+        </div>
     </div>
 </div>
 
+<!-- Notifications Banner -->
+{% if recent_notifications %}
+<div class="mb-8 animate-slide-up">
+    {% for notif in recent_notifications %}
+    <div class="flex items-center justify-between p-4 mb-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 shadow-sm">
+        <div class="flex items-center gap-3">
+            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                <i class="fas fa-bell"></i>
+            </span>
+            <div>
+                <p class="text-sm font-bold">New Payment Received!</p>
+                <p class="text-xs font-medium text-emerald-700">
+                    Business <span class="font-extrabold">{{ notif.business.name }}</span> successfully purchased plan <span class="font-extrabold">{{ notif.plan.name }}</span> for <span class="font-extrabold">{{ notif.duration_months }} months</span>. Paid amount: <span class="font-extrabold">₹{{ notif.amount }}</span>.
+                </p>
+            </div>
+        </div>
+        <span class="text-[10px] font-black text-emerald-500 uppercase tracking-wider bg-white/50 px-2 py-1 rounded-lg">
+            {{ notif.updated_at|timesince }} ago
+        </span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
 <!-- Summary Metric Row -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <!-- Total Businesses Card -->
     <div class="glass-card p-6 rounded-2xl animate-slide-up flex justify-between items-start">
         <div>
@@ -61,6 +90,17 @@
             <i class="fas fa-coins text-xl"></i>
         </div>
     </div>
+
+    <!-- Subscription Earnings Card -->
+    <div class="glass-card p-6 rounded-2xl animate-slide-up delay-300 flex justify-between items-start">
+        <div>
+            <p class="text-slate-600 text-sm font-medium mb-1">Subscription Revenue</p>
+            <h3 class="text-3xl font-bold text-slate-800">₹{{ subscription_revenue }}</h3>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-600">
+            <i class="fas fa-wallet text-xl"></i>
+        </div>
+    </div>
 </div>
 
 <!-- Businesses Interactive Table -->
@@ -77,6 +117,7 @@
                 <tr class="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
                     <th class="py-3.5 px-6">Shop/Business Name</th>
                     <th class="py-3.5 px-6">Owner & Contacts</th>
+                    <th class="py-3.5 px-6">Active Plan / Expiry</th>
                     <th class="py-3.5 px-6">Status</th>
                     <th class="py-3.5 px-6 text-right">Volume / Rev</th>
                     <th class="py-3.5 px-6 text-center">Actions</th>
@@ -109,13 +150,25 @@
                         </div>
                     </td>
                     <td class="py-4 px-6">
+                        <div class="flex flex-col">
+                            <span class="font-extrabold text-indigo-600 text-xs uppercase">{{ biz.subscription_plan.name|default:"No Plan" }}</span>
+                            <span class="text-xs text-slate-500 mt-0.5">
+                                {% if biz.subscription_end_date %}
+                                Expires: {{ biz.subscription_end_date|date:"Y-m-d" }}
+                                {% else %}
+                                Lifetime / None
+                                {% endif %}
+                            </span>
+                        </div>
+                    </td>
+                    <td class="py-4 px-6">
                         {% if biz.is_subscription_active %}
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-600">
                             <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Active
                         </span>
                         {% else %}
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-600">
-                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Expired
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Blocked
                         </span>
                         {% endif %}
                     </td>
@@ -133,14 +186,22 @@
                                 {% else %}
                                 bg-emerald-50 text-emerald-600 hover:bg-emerald-100
                                 {% endif %}" title="Toggle License">
-                                <i class="fas fa-power-off"></i> {% if biz.is_subscription_active %}Deactivate{% else %}Activate{% endif %}
+                                <i class="fas fa-power-off"></i> {% if biz.is_subscription_active %}Block{% else %}Unblock{% endif %}
                             </a>
-                            <button onclick="openEditModal('{{ biz.id }}', '{{ biz.name|escapejs }}', '{{ biz.owner_name|escapejs }}', '{{ biz.gstin|default:''|escapejs }}', '{{ biz.phone|default:''|escapejs }}', '{{ biz.email|default:''|escapejs }}', '{{ biz.address|default:''|escapejs }}', '{% if biz.logo %}{{ biz.logo.url|escapejs }}{% endif %}')" 
+                            <button data-id="{{ biz.id }}"
+                                    data-name="{{ biz.name|escapejs }}"
+                                    data-owner="{{ biz.owner_name|escapejs }}"
+                                    data-gstin="{{ biz.gstin|default:""|escapejs }}"
+                                    data-phone="{{ biz.phone|default:""|escapejs }}"
+                                    data-email="{{ biz.email|default:""|escapejs }}"
+                                    data-address="{{ biz.address|default:""|escapejs }}"
+                                    data-logo="{% if biz.logo %}{{ biz.logo.url|escapejs }}{% endif %}"
+                                    onclick="openEditModalFromButton(this)"
                                     class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-semibold text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Edit Business">
                                 <i class="fas fa-edit"></i> Edit
                             </button>
                             <a href="{% url 'delete_business' biz.id %}" 
-                               onclick="return confirm('WARNING: Are you absolutely sure you want to delete \'{{ biz.name|escapejs }}\'? This will permanently erase ALL invoices, products, categories, staff accounts, and transactions linked to this shop!')"
+                               onclick="return confirm('WARNING: Are you absolutely sure you want to delete &quot;{{ biz.name|escapejs }}&quot;? This will permanently erase ALL invoices, products, categories, staff accounts, and transactions linked to this shop!')"
                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-semibold text-xs bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors" title="Delete Business">
                                 <i class="fas fa-trash-alt"></i> Delete
                             </a>
@@ -149,7 +210,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="py-12 text-center text-slate-400">
+                    <td colspan="6" class="py-12 text-center text-slate-400">
                         <i class="fas fa-building text-4xl mb-3 block text-slate-200"></i>
                         <p>No businesses registered in the network.</p>
                     </td>
@@ -160,9 +221,105 @@
     </div>
 </div>
 
+<!-- Recent Subscription Payments -->
+<div class="glass-card rounded-2xl border border-white/50 animate-slide-up delay-300 shadow-lg overflow-hidden mt-8 mb-8">
+    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+            <i class="fas fa-history text-indigo-500"></i> Subscription Payments History
+        </h3>
+    </div>
+    
+    <div class="overflow-x-auto w-full">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <th class="py-3.5 px-6">Date</th>
+                    <th class="py-3.5 px-6">Business</th>
+                    <th class="py-3.5 px-6">Plan</th>
+                    <th class="py-3.5 px-6">Duration</th>
+                    <th class="py-3.5 px-6">Amount</th>
+                    <th class="py-3.5 px-6">Payment / UPI Details</th>
+                    <th class="py-3.5 px-6">Status</th>
+                    <th class="py-3.5 px-6 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm">
+                {% for payment in recent_payments %}
+                <tr class="hover:bg-indigo-50/20 transition-colors">
+                    <td class="py-4 px-6 text-slate-600">
+                        {{ payment.created_at|date:"Y-m-d H:i" }}
+                    </td>
+                    <td class="py-4 px-6 font-bold text-slate-800">
+                        {{ payment.business.name }}
+                    </td>
+                    <td class="py-4 px-6 text-slate-700">
+                        {{ payment.plan.name|default:"N/A" }}
+                    </td>
+                    <td class="py-4 px-6 text-slate-600 font-medium">
+                        {{ payment.duration_months }} Months
+                    </td>
+                    <td class="py-4 px-6 font-bold text-slate-800">
+                        ₹{{ payment.amount }}
+                    </td>
+                    <td class="py-4 px-6 text-xs text-slate-500">
+                        <div class="flex flex-col">
+                            <span>Ref: {{ payment.razorpay_order_id }}</span>
+                            {% if payment.upi_utr_number %}
+                            <span class="font-bold text-slate-700 bg-indigo-50 px-2 py-0.5 rounded mt-1 select-all">UTR: {{ payment.upi_utr_number }}</span>
+                            {% else %}
+                            <span class="text-[9px] text-amber-500 font-semibold italic mt-1">No UTR submitted</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="py-4 px-6">
+                        {% if payment.status == 'SUCCESS' %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-600 w-fit">
+                            Success
+                        </span>
+                        {% elif payment.status == 'FAILED' %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-600 w-fit">
+                            Failed
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-600 w-fit animate-pulse">
+                            Pending
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            {% if payment.status == 'PENDING' %}
+                            <a href="{% url 'approve_upi_payment' payment.id %}" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold text-xs bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors" title="Approve Payment">
+                                <i class="fas fa-check"></i> Approve
+                            </a>
+                            <a href="{% url 'reject_upi_payment' payment.id %}" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold text-xs bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors" title="Reject Payment">
+                                <i class="fas fa-times"></i> Reject
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'delete_payment' payment.id %}" 
+                               onclick="return confirm('Are you sure you want to delete this payment record (Ref: {{ payment.razorpay_order_id }})? This action cannot be undone.')"
+                               class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold text-xs bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors" title="Delete Payment Record">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="py-12 text-center text-slate-400">
+                        <i class="fas fa-receipt text-4xl mb-3 block text-slate-200"></i>
+                        <p>No subscription payment records found.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <!-- Add Business Modal -->
 <div id="addBusinessModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center hidden">
-    <div class="bg-white w-full max-w-xl rounded-3xl p-6 animate-slide-up m-4">
+    <div class="bg-white w-full max-w-xl rounded-3xl p-6 animate-slide-up m-4 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-6 border-b pb-3">
             <h3 class="text-xl font-extrabold text-slate-800">Add Business & Admin Account</h3>
             <button onclick="toggleModal('addBusinessModal')" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100">
@@ -235,7 +392,7 @@
 
 <!-- Edit Business Modal -->
 <div id="editBusinessModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center hidden">
-    <div class="bg-white w-full max-w-xl rounded-3xl p-6 animate-slide-up m-4">
+    <div class="bg-white w-full max-w-xl rounded-3xl p-6 animate-slide-up m-4 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-6 border-b pb-3">
             <h3 class="text-xl font-extrabold text-slate-800">Edit Business Details</h3>
             <button onclick="toggleModal('editBusinessModal')" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100">
@@ -309,6 +466,18 @@ function toggleModal(id) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
     }
+}
+
+function openEditModalFromButton(btn) {
+    const id = btn.getAttribute('data-id');
+    const name = btn.getAttribute('data-name');
+    const owner = btn.getAttribute('data-owner');
+    const gstin = btn.getAttribute('data-gstin');
+    const phone = btn.getAttribute('data-phone');
+    const email = btn.getAttribute('data-email');
+    const address = btn.getAttribute('data-address');
+    const logoUrl = btn.getAttribute('data-logo');
+    openEditModal(id, name, owner, gstin, phone, email, address, logoUrl);
 }
 
 function openEditModal(id, name, owner, gstin, phone, email, address, logoUrl) {

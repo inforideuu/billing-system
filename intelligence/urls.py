@@ -12,4 +12,5 @@ urlpatterns = [
     path('chat/sessions/<int:session_id>/messages/', views.chat_session_messages, name='chat_session_messages'),
     path('chat/message/', views.post_chat_message, name='post_chat_message'),
     path('api/notifications/', views.api_get_notifications, name='api_get_notifications'),
+    path('api/notifications/dismiss/', views.api_dismiss_alert, name='api_dismiss_alert'),
 ]

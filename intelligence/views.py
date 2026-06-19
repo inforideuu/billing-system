@@ -2,13 +2,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from core.decorators import role_required
+from core.decorators import role_required, plan_feature_required
 from core.utils import filter_by_business, get_business
 from inventory.models import Product, Batch
 from .utils import get_smart_insights, get_demand_forecasts, send_alert_notifications, get_dynamic_price
 
 @login_required(login_url='/accounts/login/')
 @role_required(['ADMIN'])
+@plan_feature_required('has_smart_insights')
 def insights(request):
     business = get_business(request)
     insights_data = get_smart_insights(request, business)
@@ -31,6 +32,7 @@ def insights(request):
 
 @login_required(login_url='/accounts/login/')
 @role_required(['ADMIN'])
+@plan_feature_required('has_batch_tracking')
 def batches_list(request):
     business = get_business(request)
     batches = filter_by_business(Batch.objects.all(), request).order_by('expiry_date')
@@ -51,6 +53,7 @@ def batches_list(request):
 
 @login_required(login_url='/accounts/login/')
 @role_required(['ADMIN'])
+@plan_feature_required('has_batch_tracking')
 def add_batch(request):
     if request.method == 'POST':
         try:
@@ -88,6 +91,7 @@ def add_batch(request):
 
 @login_required(login_url='/accounts/login/')
 @role_required(['ADMIN'])
+@plan_feature_required('has_batch_tracking')
 def delete_batch(request, batch_id):
     if request.method == 'POST':
         try:
@@ -109,19 +113,46 @@ def delete_batch(request, batch_id):
 @role_required(['ADMIN'])
 def edit_settings(request):
     business = get_business(request)
+    plan = business.subscription_plan
+    
     if request.method == 'POST':
         try:
-            business.smart_insights_enabled = request.POST.get('smart_insights') == 'on'
-            business.forecasting_enabled = request.POST.get('forecasting') == 'on'
-            business.dynamic_pricing_enabled = request.POST.get('dynamic_pricing') == 'on'
-            business.batch_tracking_enabled = request.POST.get('batch_tracking') == 'on'
+            # Check features allowed by the active plan
+            has_smart_insights = plan.has_smart_insights if plan else False
+            has_forecasting = plan.has_forecasting if plan else False
+            has_dynamic_pricing = plan.has_dynamic_pricing if plan else False
+            has_batch_tracking = plan.has_batch_tracking if plan else False
+            
+            # Update only enabled features according to plan limits
+            if has_smart_insights:
+                business.smart_insights_enabled = request.POST.get('smart_insights') == 'on'
+            else:
+                business.smart_insights_enabled = False
+                
+            if has_forecasting:
+                business.forecasting_enabled = request.POST.get('forecasting') == 'on'
+            else:
+                business.forecasting_enabled = False
+                
+            if has_dynamic_pricing:
+                business.dynamic_pricing_enabled = request.POST.get('dynamic_pricing') == 'on'
+            else:
+                business.dynamic_pricing_enabled = False
+                
+            if has_batch_tracking:
+                business.batch_tracking_enabled = request.POST.get('batch_tracking') == 'on'
+            else:
+                business.batch_tracking_enabled = False
             
             business.low_stock_threshold = int(request.POST.get('low_stock_threshold', 5))
-            business.expiry_alert_days = int(request.POST.get('expiry_alert_days', 30))
             
-            business.pricing_low_stock_percent = float(request.POST.get('pricing_low_stock_percent', 10))
-            business.pricing_high_demand_percent = float(request.POST.get('pricing_high_demand_percent', 15))
-            business.pricing_clearance_percent = float(request.POST.get('pricing_clearance_percent', 20))
+            if has_batch_tracking:
+                business.expiry_alert_days = int(request.POST.get('expiry_alert_days', 30))
+            
+            if has_dynamic_pricing:
+                business.pricing_low_stock_percent = float(request.POST.get('pricing_low_stock_percent', 10))
+                business.pricing_high_demand_percent = float(request.POST.get('pricing_high_demand_percent', 15))
+                business.pricing_clearance_percent = float(request.POST.get('pricing_clearance_percent', 20))
             
             business.save()
             messages.success(request, "Intelligence settings updated successfully!")
@@ -161,6 +192,22 @@ def api_get_notifications(request):
     alerts = insights.get('alerts', [])
     
     return JsonResponse({'status': 'success', 'count': len(alerts), 'alerts': alerts})
+
+@login_required(login_url='/accounts/login/')
+def api_dismiss_alert(request):
+    if request.method == 'POST':
+        import json
+        try:
+            data = json.loads(request.body)
+            alert_key = data.get('alert_key')
+            business = get_business(request)
+            if business and alert_key:
+                from .models import DismissedAlert
+                DismissedAlert.objects.get_or_create(business=business, alert_key=alert_key)
+                return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
 
 # AI Chatbot API Endpoints
 from django.utils import timezone

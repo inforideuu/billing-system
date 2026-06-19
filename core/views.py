@@ -8,10 +8,13 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from core.decorators import role_required
 from core.utils import filter_by_business, get_business
-from core.models import Business, UserProfile
+from core.models import Business, UserProfile, Plan, SubscriptionPayment
 from billing.models import FestivalOffer
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from datetime import timedelta
 
 @login_required(login_url='/accounts/login/')
 def dashboard(request):
@@ -62,6 +65,13 @@ def dashboard(request):
         active_offers = FestivalOffer.objects.none()
         festival_mode = False
 
+    days_remaining = None
+    show_expiry_warning = False
+    if business and business.subscription_plan and business.subscription_end_date:
+        days_remaining = (business.subscription_end_date.date() - timezone.now().date()).days
+        if 0 <= days_remaining <= 5:
+            show_expiry_warning = True
+
     context = {
         'today_revenue': today_revenue,
         'total_sales': total_sales,
@@ -69,7 +79,10 @@ def dashboard(request):
         'monthly_revenue_data': monthly_revenue_data,
         'months': months,
         'active_offers': active_offers,
-        'festival_mode': festival_mode
+        'festival_mode': festival_mode,
+        'business': business,
+        'show_expiry_warning': show_expiry_warning,
+        'days_remaining': days_remaining
     }
     return render(request, 'core/dashboard.html', context)
 
@@ -276,17 +289,31 @@ def super_admin_dashboard(request):
     )
     total_businesses = Business.objects.count()
     active_subs = Business.objects.filter(is_subscription_active=True).count()
-    
     total_rev_agg = Invoice.objects.aggregate(Sum('total_amount'))['total_amount__sum'] or 0.00
+    plans = Plan.objects.all()
     
-    # Fetch system-wide top performing shops
+    # Calculate Super Admin's Subscription Earnings
+    sub_rev_agg = SubscriptionPayment.objects.filter(status='SUCCESS').aggregate(Sum('amount'))['amount__sum'] or 0.00
+    
+    # Fetch recent payments
+    recent_payments = SubscriptionPayment.objects.all().order_by('-created_at')[:10]
+    
+    # Calculate notifications (successful payments in the last 24 hours)
+    one_day_ago = timezone.now() - timedelta(hours=24)
+    recent_notifications = SubscriptionPayment.objects.filter(status='SUCCESS', updated_at__gte=one_day_ago).order_by('-updated_at')
+    
     context = {
         'businesses': businesses,
         'total_businesses': total_businesses,
         'active_subs': active_subs,
-        'total_revenue': round(total_rev_agg, 2)
+        'total_revenue': round(total_rev_agg, 2),
+        'subscription_revenue': round(sub_rev_agg, 2),
+        'recent_payments': recent_payments,
+        'recent_notifications': recent_notifications,
+        'plans': plans
     }
     return render(request, 'core/super_admin_dashboard.html', context)
+
 
 @login_required(login_url='/accounts/login/')
 @role_required(['SUPER_ADMIN'])
@@ -294,7 +321,7 @@ def toggle_subscription(request, business_id):
     business = get_object_or_404(Business, id=business_id)
     business.is_subscription_active = not business.is_subscription_active
     business.save()
-    messages.success(request, f"Subscription updated successfully for '{business.name}'!")
+    messages.success(request, f"Subscription status updated for '{business.name}'!")
     return redirect('super_admin_dashboard')
 
 @login_required(login_url='/accounts/login/')
@@ -317,8 +344,12 @@ def add_business_admin(request):
             return redirect('super_admin_dashboard')
             
         business = Business.objects.create(
-            name=b_name, owner_name=owner_name, phone=phone, email=email, gstin=gstin, address=address, logo=logo
+            name=b_name, owner_name=owner_name, phone=phone, email=email, gstin=gstin, address=address, logo=logo,
+            subscription_plan=None,
+            is_subscription_active=True,
+            subscription_end_date=timezone.now() - timedelta(days=1)
         )
+        
         user = User.objects.create_user(username=username, password=password, email=email)
         
         profile = user.profile
@@ -350,6 +381,8 @@ def edit_business_admin(request, business_id):
             messages.success(request, f"Business details updated successfully for '{business.name}'!")
         except Exception as e:
             messages.error(request, f"Error updating business: {str(e)}")
+            
+    return redirect('super_admin_dashboard')
             
     return redirect('super_admin_dashboard')
 
@@ -391,6 +424,14 @@ def manage_cashiers(request):
 @role_required(['ADMIN'])
 def add_cashier(request):
     business = get_business(request)
+    if business and business.subscription_plan:
+        max_c = business.subscription_plan.max_cashiers
+        if max_c != -1:
+            current_c = UserProfile.objects.filter(business=business, role='CASHIER').count()
+            if current_c >= max_c:
+                messages.error(request, f"Cashier limit reached! Your current plan allows a maximum of {max_c} cashier accounts. Please upgrade your plan to add more.")
+                return redirect('manage_cashiers')
+                
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -411,5 +452,224 @@ def add_cashier(request):
         return redirect('manage_cashiers')
         
     return render(request, 'core/add_cashier.html', {'business': business})
+
+
+# === PLAN MANAGEMENT (SUPER ADMIN CRUD) ===
+
+@login_required(login_url='/accounts/login/')
+@role_required(['SUPER_ADMIN'])
+def super_admin_plans(request):
+    plans = Plan.objects.all().order_by('price_3_months')
+    return render(request, 'core/super_admin_plans.html', {'plans': plans})
+
+@login_required(login_url='/accounts/login/')
+@role_required(['SUPER_ADMIN'])
+def add_plan(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        price_3_months = request.POST.get('price_3_months', '0.00')
+        price_6_months = request.POST.get('price_6_months', '0.00')
+        price_year = request.POST.get('price_year', '0.00')
+        max_cashiers = request.POST.get('max_cashiers')
+        description = request.POST.get('description')
+        
+        has_festival_offers = request.POST.get('has_festival_offers') == 'on'
+        has_batch_tracking = request.POST.get('has_batch_tracking') == 'on'
+        has_smart_insights = request.POST.get('has_smart_insights') == 'on'
+        has_forecasting = request.POST.get('has_forecasting') == 'on'
+        has_dynamic_pricing = request.POST.get('has_dynamic_pricing') == 'on'
+        has_advanced_reports = request.POST.get('has_advanced_reports') == 'on'
+        
+        Plan.objects.create(
+            name=name, price_3_months=price_3_months, price_6_months=price_6_months, price_year=price_year,
+            max_cashiers=max_cashiers, description=description,
+            has_festival_offers=has_festival_offers, has_batch_tracking=has_batch_tracking,
+            has_smart_insights=has_smart_insights, has_forecasting=has_forecasting,
+            has_dynamic_pricing=has_dynamic_pricing, has_advanced_reports=has_advanced_reports
+        )
+        messages.success(request, f"Plan '{name}' created successfully!")
+        return redirect('super_admin_plans')
+        
+    return render(request, 'core/plan_form.html', {'title': 'Add Plan'})
+
+@login_required(login_url='/accounts/login/')
+@role_required(['SUPER_ADMIN'])
+def edit_plan(request, plan_id):
+    plan = get_object_or_404(Plan, id=plan_id)
+    if request.method == 'POST':
+        plan.name = request.POST.get('name')
+        plan.price_3_months = request.POST.get('price_3_months', '0.00')
+        plan.price_6_months = request.POST.get('price_6_months', '0.00')
+        plan.price_year = request.POST.get('price_year', '0.00')
+        plan.max_cashiers = request.POST.get('max_cashiers')
+        plan.description = request.POST.get('description')
+        
+        plan.has_festival_offers = request.POST.get('has_festival_offers') == 'on'
+        plan.has_batch_tracking = request.POST.get('has_batch_tracking') == 'on'
+        plan.has_smart_insights = request.POST.get('has_smart_insights') == 'on'
+        plan.has_forecasting = request.POST.get('has_forecasting') == 'on'
+        plan.has_dynamic_pricing = request.POST.get('has_dynamic_pricing') == 'on'
+        plan.has_advanced_reports = request.POST.get('has_advanced_reports') == 'on'
+        
+        plan.save()
+        messages.success(request, f"Plan '{plan.name}' updated successfully!")
+        return redirect('super_admin_plans')
+        
+    return render(request, 'core/plan_form.html', {'plan': plan, 'title': 'Edit Plan'})
+
+@login_required(login_url='/accounts/login/')
+@role_required(['SUPER_ADMIN'])
+def delete_plan(request, plan_id):
+    plan = get_object_or_404(Plan, id=plan_id)
+    if plan.businesses.exists():
+        messages.error(request, f"Cannot delete plan '{plan.name}' because it has active subscriptions associated with it.")
+    else:
+        plan.delete()
+        messages.success(request, f"Plan deleted successfully.")
+    return redirect('super_admin_plans')
+
+
+# === SUBSCRIPTIONS AND RAZORPAY ===
+
+@login_required(login_url='/accounts/login/')
+@role_required(['ADMIN'])
+def subscription_purchase(request):
+    business = get_business(request)
+    plans = Plan.objects.all().order_by('price_3_months')
+    return render(request, 'core/subscription_purchase.html', {
+        'business': business,
+        'plans': plans
+    })
+
+@login_required(login_url='/accounts/login/')
+@role_required(['ADMIN'])
+def subscription_checkout(request, plan_id):
+    business = get_business(request)
+    plan = get_object_or_404(Plan, id=plan_id)
+    
+    # Get chosen duration: 3, 6, or 12 months
+    duration = int(request.GET.get('duration', 3))
+    if duration == 6:
+        price = plan.price_6_months
+        duration_months = 6
+    elif duration == 12:
+        price = plan.price_year
+        duration_months = 12
+    else:
+        price = plan.price_3_months
+        duration_months = 3
+        
+    import random
+    import string
+    # Generate unique local order reference ID
+    random_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    order_id = f"UPI-ORD-{random_suffix}"
+    
+    # Get UPI ID from settings
+    upi_id = getattr(settings, 'UPI_ID', 'billing@zenelait')
+    
+    # Construct standard UPI Payment URI
+    # upi://pay?pa=merchant@upi&pn=Name&am=100&tr=Order123&cu=INR&tn=Notes
+    import urllib.parse
+    clean_biz_name = urllib.parse.quote(business.name)
+    clean_plan_name = urllib.parse.quote(plan.name)
+    upi_uri = f"upi://pay?pa={upi_id}&pn={clean_biz_name}&am={price}&tr={order_id}&cu=INR&tn=Zenelait%20-{clean_plan_name}"
+    
+    # Save payment history in PENDING state
+    SubscriptionPayment.objects.create(
+        business=business,
+        plan=plan,
+        razorpay_order_id=order_id, # Reusing this field as the unique order code
+        amount=price,
+        duration_months=duration_months,
+        status='PENDING'
+    )
+    
+    context = {
+        'business': business,
+        'plan': plan,
+        'order_id': order_id,
+        'duration_months': duration_months,
+        'price': price,
+        'upi_id': upi_id,
+        'upi_uri': upi_uri
+    }
+    return render(request, 'core/subscription_checkout.html', context)
+
+@login_required(login_url='/accounts/login/')
+def payment_callback(request):
+    if request.method == "POST":
+        order_id = request.POST.get('order_id')
+        utr_number = request.POST.get('upi_utr_number')
+        
+        if not utr_number or len(utr_number.strip()) < 6:
+            messages.error(request, "Please enter a valid UPI Transaction ID / UTR number.")
+            return redirect(request.META.get('HTTP_REFERER', 'subscription_purchase'))
+            
+        payment = get_object_or_404(SubscriptionPayment, razorpay_order_id=order_id)
+        payment.upi_utr_number = utr_number.strip()
+        payment.save()
+        
+        messages.success(request, f"Your payment details (UTR: {utr_number}) have been successfully submitted for verification. Your subscription will be activated once the administrator confirms receipt!")
+        return redirect('dashboard')
+            
+    return redirect('dashboard')
+
+@login_required(login_url='/accounts/login/')
+@role_required(['SUPER_ADMIN'])
+def approve_upi_payment(request, payment_id):
+    payment = get_object_or_404(SubscriptionPayment, id=payment_id)
+    if payment.status == 'PENDING':
+        payment.status = 'SUCCESS'
+        payment.save()
+        
+        # Update business plan
+        business = payment.business
+        business.subscription_plan = payment.plan
+        business.is_subscription_active = True
+        
+        # Extend subscription end date
+        days_to_add = payment.duration_months * 30
+        now = timezone.now()
+        if business.subscription_end_date and business.subscription_end_date > now:
+            business.subscription_end_date += timedelta(days=days_to_add)
+        else:
+            business.subscription_end_date = now + timedelta(days=days_to_add)
+        business.save()
+        
+        messages.success(request, f"Approved payment for business '{business.name}'. Plan '{payment.plan.name}' activated/extended until {business.subscription_end_date.strftime('%Y-%m-%d')}!")
+    else:
+        messages.warning(request, "This payment has already been processed.")
+    return redirect('super_admin_dashboard')
+
+@login_required(login_url='/accounts/login/')
+@role_required(['SUPER_ADMIN'])
+def reject_upi_payment(request, payment_id):
+    payment = get_object_or_404(SubscriptionPayment, id=payment_id)
+    if payment.status == 'PENDING':
+        payment.status = 'FAILED'
+        payment.save()
+        messages.error(request, f"Payment rejected for business '{payment.business.name}'.")
+    else:
+        messages.warning(request, "This payment has already been processed.")
+    return redirect('super_admin_dashboard')
+
+@login_required(login_url='/accounts/login/')
+@role_required(['SUPER_ADMIN'])
+def delete_payment(request, payment_id):
+    payment = get_object_or_404(SubscriptionPayment, id=payment_id)
+    ref = payment.razorpay_order_id
+    payment.delete()
+    messages.success(request, f"Payment record {ref} deleted successfully.")
+    return redirect('super_admin_dashboard')
+
+@login_required(login_url='/accounts/login/')
+def subscription_expired(request):
+    business = get_business(request)
+    is_admin = hasattr(request.user, 'profile') and request.user.profile.role == 'ADMIN'
+    return render(request, 'core/subscription_expired.html', {
+        'business': business,
+        'is_admin': is_admin
+    })
 
 

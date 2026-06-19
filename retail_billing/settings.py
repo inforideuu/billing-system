@@ -252,3 +252,11 @@ EMAIL_HOST_USER = 'billing@zenelait.com' # Replace with your actual email
 EMAIL_HOST_PASSWORD = '' # Replace with your App Password
 DEFAULT_FROM_EMAIL = 'billing@zenelait.com'
 
+# Razorpay Configurations
+RAZORPAY_KEY_ID = 'rzp_test_SwFutc3AGUQkSR'
+RAZORPAY_KEY_SECRET = 'tN2QsZzR7oVZTOXKQWIE5Z8T'
+
+# UPI ID Configuration for Dynamic QR Payments
+UPI_ID = '9884264816@ybl'
+
+

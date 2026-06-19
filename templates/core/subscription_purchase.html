@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}Buy Subscription Plan | {{ business.name }}{% endblock %}
+{% block page_title %}Pricing & Subscriptions{% endblock %}
+
+{% block content %}
+<!-- Active Plan Status Banner -->
+<div class="glass-card p-8 rounded-3xl mb-8 border border-white/50 shadow-xl relative overflow-hidden animate-slide-up">
+    <div class="absolute -right-20 -top-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    
+    <div class="flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
+        <div>
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Your Subscription Status</h1>
+            <p class="text-slate-600 mt-2 font-medium text-sm">
+                Shop Name: <span class="font-bold text-slate-800">{{ business.name }}</span>
+            </p>
+            <div class="flex flex-wrap items-center gap-3 mt-4">
+                <span class="px-3 py-1 bg-indigo-50 text-indigo-600 text-xs font-black rounded-full uppercase tracking-wider">
+                    Current Plan: {{ business.subscription_plan.name|default:"No Active Plan" }}
+                </span>
+                <span class="px-3 py-1 {% if business.is_subscription_active %}bg-emerald-50 text-emerald-600{% else %}bg-rose-50 text-rose-600{% endif %} text-xs font-black rounded-full uppercase tracking-wider">
+                    Status: {% if business.is_subscription_active %}Active{% else %}Expired / Suspended{% endif %}
+                </span>
+                {% if business.subscription_end_date %}
+                <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full">
+                    Expires on: {{ business.subscription_end_date|date:"M d, Y" }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="text-center mb-6">
+    <h2 class="text-2xl font-black text-slate-800">Select Your New Plan</h2>
+    <p class="text-slate-500 text-sm mt-1 mb-6">Upgrade or renew your plan using Razorpay. Select your preferred billing cycle below:</p>
+</div>
+
+<!-- Duration Selector Toggle -->
+<div class="flex justify-center mb-10 animate-slide-up">
+    <div class="inline-flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-inner">
+        <button onclick="selectDuration(3)" id="btn-dur-3" class="px-6 py-2.5 rounded-xl font-bold text-sm transition-all bg-white text-indigo-600 shadow-sm">
+            3 Months
+        </button>
+        <button onclick="selectDuration(6)" id="btn-dur-6" class="px-6 py-2.5 rounded-xl font-bold text-sm transition-all text-slate-600 hover:text-slate-900">
+            6 Months
+        </button>
+        <button onclick="selectDuration(12)" id="btn-dur-12" class="px-6 py-2.5 rounded-xl font-bold text-sm transition-all text-slate-600 hover:text-slate-900">
+            1 Year (12m)
+        </button>
+    </div>
+</div>
+
+<!-- Pricing Tiers Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 animate-slide-up delay-100 mb-12">
+    {% for plan in plans %}
+    <div class="plan-card glass-card rounded-3xl border {% if business.subscription_plan == plan %}border-indigo-400 ring-2 ring-indigo-400/25{% else %}border-slate-150{% endif %} hover:border-indigo-300 transition-all p-8 shadow-sm hover:shadow-lg relative flex flex-col justify-between overflow-hidden"
+         data-price-3="{{ plan.price_3_months }}"
+         data-price-6="{{ plan.price_6_months }}"
+         data-price-12="{{ plan.price_year }}"
+         data-checkout-url="{% url 'subscription_checkout' plan.id %}">
+        
+        {% if business.subscription_plan == plan %}
+        <div class="absolute top-0 right-0 bg-indigo-500 text-white font-bold text-[10px] px-3 py-1 rounded-bl-xl uppercase tracking-wider">
+            Current Plan
+        </div>
+        {% endif %}
+
+        <div>
+            <div class="mb-6">
+                <h3 class="font-extrabold text-2xl text-slate-800 tracking-tight">{{ plan.name }}</h3>
+                <p class="text-xs text-slate-500 mt-1 uppercase tracking-wider font-bold duration-label">Duration: 3 Months</p>
+            </div>
+            
+            <div class="mb-6">
+                <span class="text-3xl font-black text-slate-900 price-display">₹{{ plan.price_3_months }}</span>
+            </div>
+            
+            <p class="text-slate-600 text-sm font-medium mb-6 leading-relaxed bg-slate-50 p-4 rounded-2xl min-h-[80px]">
+                {{ plan.description|default:"No description provided for this plan." }}
+            </p>
+            
+            <div class="space-y-3.5 mb-8">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-500 font-medium"><i class="fas fa-users-cog text-slate-400 mr-2"></i> Cashier Limit</span>
+                    <span class="font-bold text-slate-800">
+                        {% if plan.max_cashiers == -1 %}Unlimited{% else %}{{ plan.max_cashiers }} Cashiers{% endif %}
+                    </span>
+                </div>
+                
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-500 font-medium"><i class="fas fa-percentage text-slate-400 mr-2"></i> Festival Offers</span>
+                    <span>
+                        {% if plan.has_festival_offers %}
+                        <i class="fas fa-check text-emerald-500"></i>
+                        {% else %}
+                        <i class="fas fa-times text-slate-300"></i>
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-500 font-medium"><i class="fas fa-boxes text-slate-400 mr-2"></i> Batch Tracking</span>
+                    <span>
+                        {% if plan.has_batch_tracking %}
+                        <i class="fas fa-check text-emerald-500"></i>
+                        {% else %}
+                        <i class="fas fa-times text-slate-300"></i>
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-500 font-medium"><i class="fas fa-chart-line text-slate-400 mr-2"></i> Advanced Reports</span>
+                    <span>
+                        {% if plan.has_advanced_reports %}
+                        <i class="fas fa-check text-emerald-500"></i>
+                        {% else %}
+                        <i class="fas fa-times text-slate-300"></i>
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-500 font-medium"><i class="fas fa-brain text-slate-400 mr-2"></i> Smart Insights (AI)</span>
+                    <span>
+                        {% if plan.has_smart_insights %}
+                        <i class="fas fa-check text-emerald-500"></i>
+                        {% else %}
+                        <i class="fas fa-times text-slate-300"></i>
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-500 font-medium"><i class="fas fa-tags text-slate-400 mr-2"></i> Dynamic Pricing</span>
+                    <span>
+                        {% if plan.has_dynamic_pricing %}
+                        <i class="fas fa-check text-emerald-500"></i>
+                        {% else %}
+                        <i class="fas fa-times text-slate-300"></i>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="pt-4 border-t border-slate-100">
+            <a href="{% url 'subscription_checkout' plan.id %}?duration=3" class="checkout-link block w-full text-center py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-md shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                {% if business.subscription_plan == plan %}Renew Current Plan{% else %}Choose & Pay{% endif %}
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+let activeDuration = 3;
+
+function selectDuration(months) {
+    activeDuration = months;
+    
+    // Toggle active button classes
+    const durations = [3, 6, 12];
+    durations.forEach(d => {
+        const btn = document.getElementById('btn-dur-' + d);
+        if (d === months) {
+            btn.className = "px-6 py-2.5 rounded-xl font-bold text-sm transition-all bg-white text-indigo-600 shadow-sm";
+        } else {
+            btn.className = "px-6 py-2.5 rounded-xl font-bold text-sm transition-all text-slate-600 hover:text-slate-900";
+        }
+    });
+
+    // Update prices, checkout links, and duration text on cards
+    const cards = document.querySelectorAll('.plan-card');
+    cards.forEach(card => {
+        const price3 = card.getAttribute('data-price-3');
+        const price6 = card.getAttribute('data-price-6');
+        const price12 = card.getAttribute('data-price-12');
+        const baseUrl = card.getAttribute('data-checkout-url');
+        
+        const priceDisplay = card.querySelector('.price-display');
+        const durationLabel = card.querySelector('.duration-label');
+        const checkoutLink = card.querySelector('.checkout-link');
+
+        let selectedPrice = price3;
+        let durationText = "Duration: 3 Months";
+        
+        if (months === 6) {
+            selectedPrice = price6;
+            durationText = "Duration: 6 Months";
+        } else if (months === 12) {
+            selectedPrice = price12;
+            durationText = "Duration: 1 Year";
+        }
+
+        if (priceDisplay) {
+            priceDisplay.textContent = "₹" + selectedPrice;
+        }
+        if (durationLabel) {
+            durationLabel.textContent = durationText;
+        }
+        if (checkoutLink) {
+            checkoutLink.href = baseUrl + "?duration=" + months;
+        }
+    });
+}
+</script>
+{% endblock %}

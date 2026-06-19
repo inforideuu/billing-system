@@ -96,6 +96,22 @@ def get_smart_insights(request, business):
     if not business or not business.smart_insights_enabled:
         return insights
         
+    from .models import DismissedAlert
+    dismissed_keys = set(DismissedAlert.objects.filter(business=business).values_list('alert_key', flat=True))
+    
+    def add_alert(alert_type, title, message, key, badge_color, product_id=None):
+        if key not in dismissed_keys:
+            alert_dict = {
+                'type': alert_type,
+                'title': title,
+                'message': message,
+                'key': key,
+                'badge_color': badge_color
+            }
+            if product_id:
+                alert_dict['product_id'] = product_id
+            insights['alerts'].append(alert_dict)
+            
     today = date.today()
     products = Product.objects.filter(business=business, item_type='PRODUCT')
     
@@ -105,43 +121,47 @@ def get_smart_insights(request, business):
         if avg_sales > 0:
             days_left = predict_stock_out_days(p, avg_sales)
             if days_left <= 7:
-                insights['alerts'].append({
-                    'type': 'RUN_OUT_CRITICAL' if days_left <= 3 else 'RUN_OUT_WARNING',
-                    'title': 'Stock depletion alert',
-                    'message': f"Product '{p.name}' will run out in approximately {days_left} days based on sales velocity.",
-                    'product_id': p.id,
-                    'badge_color': 'bg-rose-100 text-rose-700' if days_left <= 3 else 'bg-amber-100 text-amber-700'
-                })
+                add_alert(
+                    'RUN_OUT_CRITICAL' if days_left <= 3 else 'RUN_OUT_WARNING',
+                    'Stock depletion alert',
+                    f"Product '{p.name}' will run out in approximately {days_left} days based on sales velocity.",
+                    f"run_out_{p.id}_{days_left}",
+                    'bg-rose-100 text-rose-700' if days_left <= 3 else 'bg-amber-100 text-amber-700',
+                    p.id
+                )
         elif p.stock_quantity <= business.low_stock_threshold:
-            insights['alerts'].append({
-                'type': 'LOW_STOCK',
-                'title': 'Low stock warning',
-                'message': f"Product '{p.name}' is below low stock threshold. Current stock: {p.stock_quantity}.",
-                'product_id': p.id,
-                'badge_color': 'bg-amber-100 text-amber-700'
-            })
+            add_alert(
+                'LOW_STOCK',
+                'Low stock warning',
+                f"Product '{p.name}' is below low stock threshold. Current stock: {p.stock_quantity}.",
+                f"low_stock_{p.id}",
+                'bg-amber-100 text-amber-700',
+                p.id
+            )
             
     # 2. Expiry warnings
     if business.batch_tracking_enabled:
         batches = Batch.objects.filter(business=business, stock_quantity__gt=0)
         for b in batches:
             if b.expiry_date <= today:
-                insights['alerts'].append({
-                    'type': 'EXPIRED',
-                    'title': 'Expired inventory',
-                    'message': f"Batch '{b.batch_number}' of '{b.product.name}' expired on {b.expiry_date}!",
-                    'product_id': b.product.id,
-                    'badge_color': 'bg-rose-200 text-rose-800 font-bold'
-                })
+                add_alert(
+                    'EXPIRED',
+                    'Expired inventory',
+                    f"Batch '{b.batch_number}' of '{b.product.name}' expired on {b.expiry_date}!",
+                    f"expired_{b.id}",
+                    'bg-rose-200 text-rose-800 font-bold',
+                    b.product.id
+                )
             elif b.expiry_date <= today + timedelta(days=business.expiry_alert_days):
                 days_left = (b.expiry_date - today).days
-                insights['alerts'].append({
-                    'type': 'EXPIRING_SOON',
-                    'title': 'Expiry warning',
-                    'message': f"Batch '{b.batch_number}' of '{b.product.name}' expires in {days_left} days ({b.expiry_date}).",
-                    'product_id': b.product.id,
-                    'badge_color': 'bg-amber-100 text-amber-700'
-                })
+                add_alert(
+                    'EXPIRING_SOON',
+                    'Expiry warning',
+                    f"Batch '{b.batch_number}' of '{b.product.name}' expires in {days_left} days ({b.expiry_date}).",
+                    f"expiring_{b.id}",
+                    'bg-amber-100 text-amber-700',
+                    b.product.id
+                )
             
     # 3. Monthly Sales Trajectory comparison
     now = timezone.now()
@@ -177,12 +197,13 @@ def get_smart_insights(request, business):
             'trend': 'UP' if change_pct >= 0 else 'DOWN'
         }
         if change_pct < -5.0:
-            insights['alerts'].append({
-                'type': 'SALES_DROP',
-                'title': 'Sales performance warning',
-                'message': f"Sales dropped by {abs(round(change_pct, 1))}% compared to last month.",
-                'badge_color': 'bg-rose-100 text-rose-700'
-            })
+            add_alert(
+                'SALES_DROP',
+                'Sales performance warning',
+                f"Sales dropped by {abs(round(change_pct, 1))}% compared to last month.",
+                f"sales_drop_{this_month_start.strftime('%Y_%m')}",
+                'bg-rose-100 text-rose-700'
+            )
     else:
         insights['sales_performance'] = {
             'this_month': this_month_sales,

@@ -24,3 +24,14 @@ class ChatMessage(models.Model):
 
     def __str__(self):
         return f"{self.sender}: {self.message[:50]}"
+
+class DismissedAlert(models.Model):
+    business = models.ForeignKey('core.Business', on_delete=models.CASCADE, related_name='dismissed_alerts')
+    alert_key = models.CharField(max_length=200, db_index=True)
+    dismissed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('business', 'alert_key')
+
+    def __str__(self):
+        return f"{self.business.name} - {self.alert_key}"

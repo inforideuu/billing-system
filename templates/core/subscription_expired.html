@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Subscription Expired | {{ business.name }}{% endblock %}
+{% block page_title %}Subscription Required{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto animate-slide-up py-16">
+    <div class="glass-card p-10 rounded-3xl border border-rose-100 shadow-2xl text-center relative overflow-hidden">
+        <div class="absolute -right-20 -top-20 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <div class="w-20 h-20 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mx-auto mb-8 text-4xl shadow-inner animate-pulse">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+
+        <span class="inline-block px-4 py-1.5 rounded-full bg-rose-50 text-rose-600 text-xs font-black uppercase tracking-wider mb-4">
+            Access Denied
+        </span>
+
+        <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Subscription Expired</h1>
+        <p class="text-slate-600 mt-4 font-medium text-sm leading-relaxed max-w-md mx-auto">
+            The subscription for <span class="font-extrabold text-slate-800">{{ business.name }}</span> has expired or has been deactivated by the system administrator.
+        </p>
+
+        {% if is_admin %}
+        <div class="mt-8 bg-slate-50 rounded-2xl p-6 border border-slate-100 text-left">
+            <h3 class="font-bold text-slate-800 mb-2">Shop Owner Actions:</h3>
+            <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+                As the administrator/owner of this shop, you can renew your subscription immediately using Razorpay, or change your active plan tier.
+            </p>
+            <a href="{% url 'subscription_purchase' %}" class="block w-full text-center py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-sm shadow-md shadow-rose-500/20 transition-all">
+                <i class="fas fa-credit-card mr-2"></i> Renew or Upgrade Subscription
+            </a>
+        </div>
+        {% else %}
+        <div class="mt-8 bg-slate-50 rounded-2xl p-6 border border-slate-100 text-center">
+            <h3 class="font-bold text-slate-800 mb-1">Staff Notification</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">
+                Please contact your shop manager or business administrator to renew the subscription so you can resume sales.
+            </p>
+        </div>
+        {% endif %}
+
+        <div class="mt-8 flex justify-center gap-4">
+            <a href="{% url 'logout' %}" class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors">
+                <i class="fas fa-sign-out-alt mr-1"></i> Log Out
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
