@@ -167,6 +167,8 @@
 {% endblock %}
 
 {% block scripts %}
+{{ months|json_script:"months-data" }}
+{{ monthly_revenue_data|json_script:"revenue-data" }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const ctx = document.getElementById('revenueChart').getContext('2d');
@@ -176,13 +178,16 @@ document.addEventListener('DOMContentLoaded', function() {
     gradient.addColorStop(0, 'rgba(239, 68, 68, 0.5)'); // red transparent
     gradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
     
+    const months = JSON.parse(document.getElementById('months-data').textContent);
+    const monthlyRevenueData = JSON.parse(document.getElementById('revenue-data').textContent);
+    
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: {{ months|safe }},
+            labels: months,
             datasets: [{
                 label: 'Revenue (₹)',
-                data: {{ monthly_revenue_data|safe }},
+                data: monthlyRevenueData,
                 borderColor: '#ef4444', // red
                 backgroundColor: gradient,
                 borderWidth: 3,
