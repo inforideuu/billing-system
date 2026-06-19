@@ -84,11 +84,9 @@ TEMPLATES = [
 WSGI_APPLICATION = 'retail_billing.wsgi.application'
 
 
-# Smart Database Connection fallback
-import socket
+# PostgreSQL Database Configuration
 import os
 
-# 1. First, check if there is an environment variable configuration (Render Cloud environment)
 DATABASE_URL = os.environ.get('DATABASE_URL')
 DB_NAME = os.environ.get('DB_NAME')
 DB_USER = os.environ.get('DB_USER')
@@ -132,51 +130,18 @@ if DATABASE_URL and (DATABASE_URL.startswith('postgres://') or DATABASE_URL.star
     except Exception as e:
         print(f"[Database Error] Failed to parse DATABASE_URL: {str(e)}")
 
-if not db_configured and DB_NAME and DB_USER and DB_PASSWORD and DB_HOST:
+if not db_configured:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': DB_NAME,
-            'USER': DB_USER,
-            'PASSWORD': DB_PASSWORD,
-            'HOST': DB_HOST,
-            'PORT': DB_PORT,
+            'NAME': DB_NAME if DB_NAME else 'retail_billing_db',
+            'USER': DB_USER if DB_USER else 'postgres',
+            'PASSWORD': DB_PASSWORD if DB_PASSWORD else 'annamalai238',
+            'HOST': DB_HOST if DB_HOST else '127.0.0.1',
+            'PORT': DB_PORT if DB_PORT else '5432',
         }
     }
-    db_configured = True
-    print("[Database] Using production/cloud PostgreSQL database from individual DB_* environment variables.")
-
-if not db_configured:
-    def _is_postgres_active():
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(0.5) # Super fast check
-        try:
-            s.connect(('127.0.0.1', 5432))
-            s.close()
-            return True
-        except Exception:
-            return False
-
-    if _is_postgres_active():
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql',
-                'NAME': 'retail_billing_db',
-                'USER': 'postgres',
-                'PASSWORD': 'annamalai238',
-                'HOST': '127.0.0.1',
-                'PORT': '5432',
-            }
-        }
-        print("[Database] Connected successfully to local PostgreSQL server.")
-    else:
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': BASE_DIR / 'db.sqlite3',
-            }
-        }
-        print("[Database Warning] Local PostgreSQL server at 5432 is unreachable. Falling back to local SQLite database for seamless operation.")
+    print("[Database] Configured for PostgreSQL.")
 
 
 
