@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Demo Requests - Super Admin{% endblock %}
+{% block page_title %}Demo Requests Control Center{% endblock %}
+
+{% block content %}
+<!-- Hero Widget -->
+<div class="glass-card relative overflow-hidden p-8 rounded-3xl mb-8 border border-white/50 shadow-xl animate-slide-up group">
+    <div class="absolute -right-20 -top-20 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-colors duration-1000 pointer-events-none"></div>
+    <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-300/20 rounded-full blur-3xl pointer-events-none"></div>
+    
+    <div class="flex flex-col md:flex-row justify-between items-center gap-8 relative z-10">
+        <div class="text-center md:text-left">
+            <span class="inline-block px-4 py-1.5 rounded-full bg-indigo-50 text-indigo-500 text-xs font-bold uppercase tracking-wider mb-3 animate-pulse">
+                Access Provisioning
+            </span>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+                Demo Requests <span class="inline-block">🧪</span>
+            </h1>
+            <p class="text-slate-600 mt-2 font-medium text-base max-w-xl">
+                Review, approve, or decline incoming trial requests. Approving a request creates the business and tenant user with a 3-day Premium subscription.
+            </p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'super_admin_dashboard' %}" class="px-5 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-50 transition-all text-sm">
+                <i class="fas fa-store-alt text-indigo-500"></i> Business Register
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Demo Requests -->
+<div class="glass-card rounded-2xl border border-white/50 animate-slide-up shadow-lg overflow-hidden mb-8">
+    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+            <i class="fas fa-hourglass-half text-amber-500"></i> Pending Demo Requests
+        </h3>
+    </div>
+    
+    <div class="overflow-x-auto w-full">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <th class="py-3.5 px-6">Date Requested</th>
+                    <th class="py-3.5 px-6">Proposed Business</th>
+                    <th class="py-3.5 px-6">Owner Name</th>
+                    <th class="py-3.5 px-6">Contacts</th>
+                    <th class="py-3.5 px-6">Desired Credentials</th>
+                    <th class="py-3.5 px-6 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm">
+                {% for req in pending_requests %}
+                <tr class="hover:bg-indigo-50/20 transition-colors group">
+                    <td class="py-4 px-6 text-slate-500">
+                        {{ req.created_at|date:"Y-m-d H:i" }}
+                    </td>
+                    <td class="py-4 px-6 font-bold text-slate-800">
+                        {{ req.business_name }}
+                    </td>
+                    <td class="py-4 px-6 text-slate-700">
+                        {{ req.owner_name }}
+                    </td>
+                    <td class="py-4 px-6">
+                        <div class="flex flex-col text-xs text-slate-600">
+                            <span>Email: <a href="mailto:{{ req.email }}" class="text-indigo-600 hover:underline">{{ req.email }}</a></span>
+                            <span>Phone: {{ req.phone }}</span>
+                        </div>
+                    </td>
+                    <td class="py-4 px-6">
+                        <span class="bg-indigo-50 text-indigo-700 font-semibold px-2 py-1 rounded text-xs select-all">@{{ req.username }}</span>
+                    </td>
+                    <td class="py-4 px-6">
+                        <div class="flex items-center justify-center gap-2">
+                            <a href="{% url 'approve_demo_request' req.id %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold text-xs bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors">
+                                <i class="fas fa-check"></i> Approve (3 Days)
+                            </a>
+                            <a href="{% url 'reject_demo_request' req.id %}" onclick="return confirm('Are you sure you want to decline this demo request?')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold text-xs bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors">
+                                <i class="fas fa-times"></i> Decline
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="py-12 text-center text-slate-400">
+                        <i class="fas fa-inbox text-4xl mb-3 block text-slate-200"></i>
+                        <p>No pending demo requests at this moment.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- History Requests -->
+<div class="glass-card rounded-2xl border border-white/50 animate-slide-up shadow-lg overflow-hidden">
+    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+            <i class="fas fa-history text-slate-500"></i> Processed Requests Log
+        </h3>
+    </div>
+    
+    <div class="overflow-x-auto w-full">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <th class="py-3.5 px-6">Date Processed</th>
+                    <th class="py-3.5 px-6">Business / Owner</th>
+                    <th class="py-3.5 px-6">Email / Username</th>
+                    <th class="py-3.5 px-6">Status</th>
+                    <th class="py-3.5 px-6 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm">
+                {% for req in history_requests %}
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="py-4 px-6 text-slate-500 text-xs">
+                        {{ req.updated_at|date:"Y-m-d H:i" }}
+                    </td>
+                    <td class="py-4 px-6">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-slate-800">{{ req.business_name }}</span>
+                            <span class="text-xs text-slate-500">Owner: {{ req.owner_name }}</span>
+                        </div>
+                    </td>
+                    <td class="py-4 px-6 text-slate-600">
+                        <div class="flex flex-col text-xs">
+                            <span>Email: {{ req.email }}</span>
+                            <span>Username: @{{ req.username }}</span>
+                        </div>
+                    </td>
+                    <td class="py-4 px-6">
+                        {% if req.status == 'APPROVED' %}
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 text-green-600">
+                            <i class="fas fa-check-circle text-[10px]"></i> Approved
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-600">
+                            <i class="fas fa-times-circle text-[10px]"></i> Declined
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="py-4 px-6">
+                        <div class="flex items-center justify-center gap-2">
+                            {% if req.status == 'APPROVED' %}
+                            <a href="{% url 'reject_demo_request' req.id %}" onclick="return confirm('Are you sure you want to decline/revoke this approved demo?')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold text-xs bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors" title="Decline / Revoke Demo">
+                                <i class="fas fa-times"></i> Decline
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'delete_demo_request' req.id %}" onclick="return confirm('Are you sure you want to delete this log entry permanently?')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold text-xs bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors" title="Delete Request Log">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="py-8 text-center text-slate-400">
+                        <p>No historical requests found.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

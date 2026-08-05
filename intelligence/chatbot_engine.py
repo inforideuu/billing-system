@@ -15,6 +15,72 @@ def route_chatbot_query(user, business, query_text):
     query = query_text.lower().strip()
     user_role = getattr(user.profile, 'role', 'CASHIER')
     
+    # Super Admin specific intents
+    if user_role == 'SUPER_ADMIN':
+        # 1. Pending Demos Intent
+        if any(k in query for k in ['pending demo', 'demo request', 'trials pending']):
+            from core.models import DemoRequest
+            demos = DemoRequest.objects.filter(status='PENDING').order_by('-created_at')
+            if demos.exists():
+                msg = f"✨ **Pending Demo Requests ({demos.count()} requests):**\n\n"
+                msg += "| Business | Owner | Email | Phone |\n| :--- | :--- | :--- | :--- |\n"
+                payload = []
+                for d in demos:
+                    msg += f"| {d.business_name} | {d.owner_name} | {d.email} | {d.phone} |\n"
+                    payload.append({'business': d.business_name, 'owner': d.owner_name, 'email': d.email})
+                return {
+                    'message': msg,
+                    'is_system_data': True,
+                    'data_payload': payload,
+                    'suggestions': ["Show pending payments", "Show active plans"]
+                }
+            return {
+                'message': "✅ There are no pending demo requests at the moment.",
+                'is_system_data': False,
+                'suggestions': ["Show pending payments", "Show active plans"]
+            }
+
+        # 2. Pending Payments (System-wide UPI Verification)
+        if any(k in query for k in ['pending payment', 'verify payment', 'upi verification']):
+            from core.models import SubscriptionPayment
+            payments = SubscriptionPayment.objects.filter(status='PENDING').order_by('-created_at')
+            if payments.exists():
+                msg = f"💳 **Pending UPI Payments ({payments.count()} payments):**\n\n"
+                msg += "| Business | Plan | Amount | UTR Number |\n| :--- | :--- | :--- | :--- |\n"
+                payload = []
+                for p in payments:
+                    msg += f"| {p.business.name} | {p.plan.name} | Rs. {p.amount} | `{p.upi_utr_number}` |\n"
+                    payload.append({'business': p.business.name, 'plan': p.plan.name, 'amount': float(p.amount), 'utr': p.upi_utr_number})
+                return {
+                    'message': msg,
+                    'is_system_data': True,
+                    'data_payload': payload,
+                    'suggestions': ["Show pending demo requests", "Show active plans"]
+                }
+            return {
+                'message': "✅ No subscription payments are pending verification.",
+                'is_system_data': False,
+                'suggestions': ["Show pending demo requests", "Show active plans"]
+            }
+
+        # 3. Active Plans Intent
+        if any(k in query for k in ['active plan', 'plans report', 'plan usage']):
+            from core.models import Business, Plan
+            plans = Plan.objects.annotate(business_count=Count('businesses'))
+            msg = "📋 **Subscription Plans Report:**\n\n"
+            msg += "| Plan Name | Cashier Limit | Subscribed Shops |\n| :--- | :--- | :---: |\n"
+            payload = []
+            for p in plans:
+                limit = "Unlimited" if p.max_cashiers == -1 else p.max_cashiers
+                msg += f"| **{p.name}** | {limit} | **{p.business_count}** |\n"
+                payload.append({'plan': p.name, 'count': p.business_count})
+            return {
+                'message': msg,
+                'is_system_data': True,
+                'data_payload': payload,
+                'suggestions': ["Show pending demo requests", "Show pending payments"]
+            }
+
     # 1. Enforce Role-based Data Access Control
     restricted_keywords = ['profit', 'margin', 'ledger', 'financial', 'tax', 'all cashiers', 'staff salary', 'subscription']
     is_asking_restricted = any(keyword in query for keyword in restricted_keywords)
@@ -62,7 +128,7 @@ def route_chatbot_query(user, business, query_text):
         }
 
     # 3. Low Stock Intent
-    if any(k in query for k in ['low stock', 'out of stock', 'stock warning', 'run out']):
+    if any(k in query for k in ['low stock', 'out of stock', 'stock warning', 'run out', 'low in stock']):
         low_stock_threshold = business.low_stock_threshold
         products = Product.objects.filter(
             business=business,
@@ -129,7 +195,7 @@ def route_chatbot_query(user, business, query_text):
             }
 
     # 5. Pending Payments Intent
-    if any(k in query for k in ['pending payment', 'unpaid', 'pending invoices', 'debts']):
+    if any(k in query for k in ['pending payment', 'unpaid', 'pending invoices', 'debts', 'unpaid bills']):
         invoices = Invoice.objects.filter(business=business, status='PENDING').order_by('-date')
         
         if invoices.exists():
@@ -239,7 +305,7 @@ def route_chatbot_query(user, business, query_text):
             }
 
     # 8. Look up product details/pricing
-    if any(k in query for k in ['price of', 'look up', 'search product', 'find stock']):
+    if any(k in query for k in ['price of', 'price check', 'look up', 'search product', 'find stock', 'price']):
         # Extract product name candidates
         clean_query = query.replace('price of', '').replace('look up', '').replace('search', '').replace('find', '').replace('product', '').strip()
         if len(clean_query) >= 3:

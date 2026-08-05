@@ -673,3 +673,145 @@ def subscription_expired(request):
     })
 
 
+def request_demo(request):
+    from core.forms import DemoRequestForm
+    from django.contrib.auth.hashers import make_password
+    if request.method == 'POST':
+        form = DemoRequestForm(request.POST)
+        if form.is_valid():
+            demo_req = form.save(commit=False)
+            demo_req.password = make_password(form.cleaned_data['password'])
+            demo_req.save()
+            messages.success(request, "Your demo request has been submitted successfully! The Super Admin will review and approve it shortly.")
+            return redirect('homepage')
+        else:
+            # Add form errors to messages so they display
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.replace('_', ' ').capitalize()}: {error}")
+            return redirect('homepage')
+    return redirect('homepage')
+
+
+@login_required(login_url='/accounts/login/')
+@role_required(['SUPER_ADMIN'])
+def super_admin_demo_requests(request):
+    from core.models import DemoRequest
+    pending_requests = DemoRequest.objects.filter(status='PENDING').order_by('-created_at')
+    history_requests = DemoRequest.objects.exclude(status='PENDING').order_by('-updated_at')
+    return render(request, 'core/super_admin_demo_requests.html', {
+        'pending_requests': pending_requests,
+        'history_requests': history_requests,
+    })
+
+
+@login_required(login_url='/accounts/login/')
+@role_required(['SUPER_ADMIN'])
+def approve_demo_request(request, request_id):
+    from core.models import DemoRequest, Plan, Business
+    from django.contrib.auth.models import User
+    demo_req = get_object_or_404(DemoRequest, id=request_id)
+    if demo_req.status == 'PENDING':
+        # Check if username or email was taken in the meantime
+        if User.objects.filter(username__iexact=demo_req.username).exists():
+            messages.error(request, "Cannot approve: Username is now taken.")
+            return redirect('super_admin_demo_requests')
+            
+        # Get Premium plan
+        premium_plan = Plan.objects.filter(name__iexact='Premium').first()
+        if not premium_plan:
+            # Fallback to any plan
+            premium_plan = Plan.objects.first()
+            
+        # Create Business
+        business = Business.objects.create(
+            name=demo_req.business_name,
+            owner_name=demo_req.owner_name,
+            phone=demo_req.phone,
+            email=demo_req.email,
+            subscription_plan=premium_plan,
+            is_subscription_active=True,
+            subscription_end_date=timezone.now() + timedelta(days=3),
+            smart_insights_enabled=True,
+            forecasting_enabled=True,
+            dynamic_pricing_enabled=True,
+            batch_tracking_enabled=True
+        )
+        
+        # Create User
+        user = User.objects.create_user(
+            username=demo_req.username,
+            email=demo_req.email,
+        )
+        user.password = demo_req.password
+        user.save()
+        
+        # Assign role & business
+        profile = user.profile
+        profile.role = 'ADMIN'
+        profile.business = business
+        profile.save()
+        
+        demo_req.status = 'APPROVED'
+        demo_req.save()
+        
+        messages.success(request, f"Demo request approved. Business '{business.name}' created with 3-day Premium tier access!")
+    else:
+        messages.warning(request, "This request has already been processed.")
+        
+    return redirect('super_admin_demo_requests')
+
+
+@login_required(login_url='/accounts/login/')
+@role_required(['SUPER_ADMIN'])
+def reject_demo_request(request, request_id):
+    from core.models import DemoRequest
+    from django.contrib.auth.models import User
+    demo_req = get_object_or_404(DemoRequest, id=request_id)
+    if demo_req.status in ['PENDING', 'APPROVED']:
+        if demo_req.status == 'APPROVED':
+            # Block the associated business
+            try:
+                user = User.objects.get(username=demo_req.username)
+                if user.profile.business:
+                    user.profile.business.is_subscription_active = False
+                    user.profile.business.save()
+            except User.DoesNotExist:
+                pass
+        demo_req.status = 'DECLINED'
+        demo_req.save()
+        messages.error(request, f"Demo request for '{demo_req.business_name}' declined.")
+    else:
+        messages.warning(request, "This request has already been processed.")
+        
+    return redirect('super_admin_demo_requests')
+
+
+@login_required(login_url='/accounts/login/')
+@role_required(['SUPER_ADMIN'])
+def delete_demo_request(request, request_id):
+    from core.models import DemoRequest
+    from django.contrib.auth.models import User
+    from billing.models import Invoice
+    demo_req = get_object_or_404(DemoRequest, id=request_id)
+    name = demo_req.business_name
+    
+    # If the request was approved, completely delete the created resources
+    if demo_req.status == 'APPROVED':
+        try:
+            user = User.objects.get(username=demo_req.username)
+            business = user.profile.business
+            if business:
+                # Clear invoices first to avoid integrity constraints on invoice items / products
+                Invoice.objects.filter(business=business).delete()
+                business.delete()
+            user.delete()
+        except User.DoesNotExist:
+            pass
+            
+    demo_req.delete()
+    messages.success(request, f"Demo request log and all associated login/business data for '{name}' deleted successfully.")
+    return redirect('super_admin_demo_requests')
+
+
+

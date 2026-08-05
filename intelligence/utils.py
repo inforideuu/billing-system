@@ -93,7 +93,7 @@ def get_smart_insights(request, business):
         'dead_stock': []
     }
     
-    if not business or not business.smart_insights_enabled:
+    if not business:
         return insights
         
     from .models import DismissedAlert
@@ -115,21 +115,23 @@ def get_smart_insights(request, business):
     today = date.today()
     products = Product.objects.filter(business=business, item_type='PRODUCT')
     
-    # 1. Product run-out predictions
+    # 1. Product run-out predictions (Smart Insights gated)
     for p in products:
-        avg_sales = get_average_daily_sales(p)
-        if avg_sales > 0:
-            days_left = predict_stock_out_days(p, avg_sales)
-            if days_left <= 7:
-                add_alert(
-                    'RUN_OUT_CRITICAL' if days_left <= 3 else 'RUN_OUT_WARNING',
-                    'Stock depletion alert',
-                    f"Product '{p.name}' will run out in approximately {days_left} days based on sales velocity.",
-                    f"run_out_{p.id}_{days_left}",
-                    'bg-rose-100 text-rose-700' if days_left <= 3 else 'bg-amber-100 text-amber-700',
-                    p.id
-                )
-        elif p.stock_quantity <= business.low_stock_threshold:
+        if business.smart_insights_enabled:
+            avg_sales = get_average_daily_sales(p)
+            if avg_sales > 0:
+                days_left = predict_stock_out_days(p, avg_sales)
+                if days_left <= 7:
+                    add_alert(
+                        'RUN_OUT_CRITICAL' if days_left <= 3 else 'RUN_OUT_WARNING',
+                        'Stock depletion alert',
+                        f"Product '{p.name}' will run out in approximately {days_left} days based on sales velocity.",
+                        f"run_out_{p.id}_{days_left}",
+                        'bg-rose-100 text-rose-700' if days_left <= 3 else 'bg-amber-100 text-amber-700',
+                        p.id
+                    )
+                    continue
+        if p.stock_quantity <= business.low_stock_threshold:
             add_alert(
                 'LOW_STOCK',
                 'Low stock warning',
@@ -196,7 +198,7 @@ def get_smart_insights(request, business):
             'change_percent_abs': abs(round(change_pct, 2)),
             'trend': 'UP' if change_pct >= 0 else 'DOWN'
         }
-        if change_pct < -5.0:
+        if change_pct < -5.0 and business.smart_insights_enabled:
             add_alert(
                 'SALES_DROP',
                 'Sales performance warning',

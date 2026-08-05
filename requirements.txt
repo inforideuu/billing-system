@@ -4,7 +4,8 @@ cryptography==48.0.0
 Django==5.2.14
 pillow==12.2.0
 pycparser==3.0
-psycopg2-binary==2.9.12
+mysqlclient
+
 sqlparse==0.5.5
 tzdata==2026.2
 waitress==3.0.2

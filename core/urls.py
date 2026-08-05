@@ -29,5 +29,12 @@ urlpatterns = [
     path('subscription/checkout/<int:plan_id>/', views.subscription_checkout, name='subscription_checkout'),
     path('subscription/payment-callback/', views.payment_callback, name='payment_callback'),
     path('subscription/expired/', views.subscription_expired, name='subscription_expired'),
+    
+    # Demo Request URLs
+    path('request-demo/', views.request_demo, name='request_demo'),
+    path('super-admin/demo-requests/', views.super_admin_demo_requests, name='super_admin_demo_requests'),
+    path('super-admin/demo-requests/approve/<int:request_id>/', views.approve_demo_request, name='approve_demo_request'),
+    path('super-admin/demo-requests/reject/<int:request_id>/', views.reject_demo_request, name='reject_demo_request'),
+    path('super-admin/demo-requests/delete/<int:request_id>/', views.delete_demo_request, name='delete_demo_request'),
 ]
 

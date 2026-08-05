@@ -84,7 +84,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'retail_billing.wsgi.application'
 
 
-# PostgreSQL Database Configuration
+# Database Configuration (MySQL)
 import os
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -92,16 +92,14 @@ DB_NAME = os.environ.get('DB_NAME')
 DB_USER = os.environ.get('DB_USER')
 DB_PASSWORD = os.environ.get('DB_PASSWORD')
 DB_HOST = os.environ.get('DB_HOST')
-DB_PORT = os.environ.get('DB_PORT', '5432')
+DB_PORT = os.environ.get('DB_PORT', '3306')
 
 db_configured = False
 
-# Parse postgres:// or postgresql:// URL
-if DATABASE_URL and (DATABASE_URL.startswith('postgres://') or DATABASE_URL.startswith('postgresql://')):
+# 1. Parse MySQL DATABASE_URL
+if DATABASE_URL and DATABASE_URL.startswith('mysql://'):
     try:
-        # Parse postgres(ql)://user:password@host:port/dbname
-        prefix = 'postgresql://' if DATABASE_URL.startswith('postgresql://') else 'postgres://'
-        url = DATABASE_URL[len(prefix):]
+        url = DATABASE_URL[len('mysql://'):]
         if '@' in url:
             credentials, location = url.split('@', 1)
             user, password = credentials.split(':', 1)
@@ -113,35 +111,43 @@ if DATABASE_URL and (DATABASE_URL.startswith('postgres://') or DATABASE_URL.star
                     host, port = host_port.split(':', 1)
                 else:
                     host = host_port
-                    port = '5432'
-                
+                    port = '3306'
                 DATABASES = {
                     'default': {
-                        'ENGINE': 'django.db.backends.postgresql',
+                        'ENGINE': 'django.db.backends.mysql',
                         'NAME': db_name,
                         'USER': user,
                         'PASSWORD': password,
                         'HOST': host,
                         'PORT': port,
+                        'OPTIONS': {
+                            'charset': 'utf8mb4',
+                            'use_unicode': True,
+                        }
                     }
                 }
                 db_configured = True
-                print("[Database] Using production/cloud PostgreSQL database parsed from DATABASE_URL.")
+                print("[Database] Using production/cloud MySQL database parsed from DATABASE_URL.")
     except Exception as e:
-        print(f"[Database Error] Failed to parse DATABASE_URL: {str(e)}")
+        print(f"[Database Error] Failed to parse MySQL DATABASE_URL: {str(e)}")
 
+# 2. Default Fallback Configuration (MySQL Only)
 if not db_configured:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql',
+            'ENGINE': 'django.db.backends.mysql',
             'NAME': DB_NAME if DB_NAME else 'retail_billing_db',
-            'USER': DB_USER if DB_USER else 'postgres',
-            'PASSWORD': DB_PASSWORD if DB_PASSWORD else 'annamalai238',
+            'USER': DB_USER if DB_USER else 'root',
+            'PASSWORD': DB_PASSWORD if DB_PASSWORD else 'root',
             'HOST': DB_HOST if DB_HOST else '127.0.0.1',
-            'PORT': DB_PORT if DB_PORT else '5432',
+            'PORT': DB_PORT if DB_PORT else '3306',
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'use_unicode': True,
+            }
         }
     }
-    print("[Database] Configured for PostgreSQL.")
+    print("[Database] Configured for MySQL.")
 
 
 

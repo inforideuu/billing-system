@@ -109,3 +109,24 @@ class SubscriptionPayment(models.Model):
     def __str__(self):
         return f"Payment {self.razorpay_order_id} - {self.status} (Rs. {self.amount} for {self.duration_months}m)"
 
+
+class DemoRequest(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('APPROVED', 'Approved'),
+        ('DECLINED', 'Declined'),
+    ]
+    business_name = models.CharField(max_length=200)
+    owner_name = models.CharField(max_length=200)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    username = models.CharField(max_length=150)
+    password = models.CharField(max_length=128)  # Store hashed password
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Demo Request: {self.business_name} ({self.status})"
+
+

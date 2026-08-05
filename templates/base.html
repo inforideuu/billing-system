@@ -158,9 +158,11 @@
                             <div class="max-h-80 overflow-y-auto scrollbar-hide bg-white" id="notificationList">
                                 <!-- Notifications will be injected here via JS -->
                             </div>
+                            {% if request.user.profile.role != 'SUPER_ADMIN' %}
                             <div class="bg-slate-50 border-t border-slate-100 px-4 py-2 text-center">
                                 <a href="{% url 'smart_insights' %}" class="text-xs font-bold text-red-600 hover:text-red-700">View Smart Insights Dashboard</a>
                             </div>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -269,10 +271,20 @@
             
             <!-- Horizontal Quick suggestions Scroll Tray -->
             <div class="px-3 py-2 bg-white border-t border-slate-100 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-none" id="quickSuggestionsTray">
+                {% if request.user.profile.role == 'SUPER_ADMIN' %}
+                <button onclick="submitSuggestedQuery('Show pending demo requests')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">✨ Pending Demos</button>
+                <button onclick="submitSuggestedQuery('Show pending payments')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">💳 Pending Payments</button>
+                <button onclick="submitSuggestedQuery('Show active plans')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">📋 Active Plans</button>
+                {% elif request.user.profile.role == 'CASHIER' %}
+                <button onclick="submitSuggestedQuery('Show today\'s sales')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">📊 Today's Sales</button>
+                <button onclick="submitSuggestedQuery('Which products are low in stock?')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">⚠️ Low Stock</button>
+                <button onclick="submitSuggestedQuery('Price check product')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">🏷️ Price Check</button>
+                {% else %}
                 <button onclick="submitSuggestedQuery('Show today\'s sales')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">📊 Today's Sales</button>
                 <button onclick="submitSuggestedQuery('Which products are low in stock?')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">⚠️ Low Stock</button>
                 <button onclick="submitSuggestedQuery('Top selling products')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">🔥 Top Sellers</button>
                 <button onclick="submitSuggestedQuery('Pending payments')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">⏳ Unpaid Bills</button>
+                {% endif %}
             </div>
             
             <!-- Message Input Area -->
@@ -355,8 +367,10 @@
     <script>
         let currentSessionId = null;
         let voiceInputLanguage = 'en-US'; // English by default, toggles to 'ta-IN' for Tamil
+        let predefinedSuggestionsHTML = '';
 
         document.addEventListener('DOMContentLoaded', function() {
+            predefinedSuggestionsHTML = document.getElementById('quickSuggestionsTray').innerHTML;
             // Load previous chatbot threads
             loadChatSessions();
         });
@@ -499,13 +513,15 @@
                     // Dynamic suggestions update
                     if(data.suggestions) {
                         const suggestionsTray = document.getElementById('quickSuggestionsTray');
-                        suggestionsTray.innerHTML = '';
+                        suggestionsTray.innerHTML = predefinedSuggestionsHTML; // Keep permanent predefined questions
                         data.suggestions.forEach(s => {
-                            const btn = document.createElement('button');
-                            btn.className = 'inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide';
-                            btn.onclick = () => submitSuggestedQuery(s);
-                            btn.innerText = s;
-                            suggestionsTray.appendChild(btn);
+                            if (!predefinedSuggestionsHTML.includes(s)) {
+                                const btn = document.createElement('button');
+                                btn.className = 'inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide';
+                                btn.onclick = () => submitSuggestedQuery(s);
+                                btn.innerText = s;
+                                suggestionsTray.appendChild(btn);
+                            }
                         });
                     }
                 } else {
@@ -777,8 +793,19 @@
                                 bgClass = 'bg-amber-50';
                             }
                             
+                            let targetUrl = alert.redirect_url || '/inventory/';
+                            if (alert.type === 'PENDING_PAYMENT') {
+                                icon = 'fa-wallet';
+                                iconColor = 'text-amber-500';
+                                bgClass = 'bg-amber-50';
+                            } else if (alert.type === 'PENDING_DEMO') {
+                                icon = 'fa-magic';
+                                iconColor = 'text-indigo-500';
+                                bgClass = 'bg-indigo-50';
+                            }
+                            
                             list.innerHTML += `
-                                <div class="p-4 border-b border-slate-50 hover:bg-slate-50 flex justify-between items-start transition-colors cursor-pointer" onclick="if(!event.target.closest('.dismiss-btn')) window.location.href='/inventory/'">
+                                <div class="p-4 border-b border-slate-50 hover:bg-slate-50 flex justify-between items-start transition-colors cursor-pointer" onclick="if(!event.target.closest('.dismiss-btn')) window.location.href='${targetUrl}'">
                                     <div class="flex gap-3 items-start">
                                         <div class="w-8 h-8 rounded-full ${bgClass} flex items-center justify-center flex-shrink-0 mt-0.5">
                                             <i class="fas ${icon} ${iconColor} text-xs"></i>
