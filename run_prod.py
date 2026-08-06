@@ -48,7 +48,10 @@ if __name__ == "__main__":
             'passwd': db_password,
         }
         if db_ssl_ca:
-            conn_params['ssl'] = {'ca': db_ssl_ca}
+            if os.name == 'nt':
+                conn_params['ssl'] = {}  # Use Windows System Trust Store (Schannel)
+            else:
+                conn_params['ssl'] = {'ca': db_ssl_ca}
             
         print(f"Connecting to TiDB server to ensure database '{db_name}' exists...")
         conn = MySQLdb.connect(**conn_params)

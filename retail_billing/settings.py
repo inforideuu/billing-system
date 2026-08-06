@@ -146,7 +146,10 @@ if DATABASE_URL and (DATABASE_URL.startswith('mysql://') or DATABASE_URL.startsw
                     'use_unicode': True,
                 }
                 if DB_SSL_CA:
-                    options['ssl'] = {'ca': DB_SSL_CA}
+                    if os.name == 'nt':
+                        options['ssl'] = {}  # Use Windows System Trust Store (Schannel)
+                    else:
+                        options['ssl'] = {'ca': DB_SSL_CA}
                     
                 DATABASES = {
                     'default': {
@@ -171,7 +174,10 @@ if not db_configured:
         'use_unicode': True,
     }
     if DB_SSL_CA:
-        options['ssl'] = {'ca': DB_SSL_CA}
+        if os.name == 'nt':
+            options['ssl'] = {}  # Use Windows System Trust Store (Schannel)
+        else:
+            options['ssl'] = {'ca': DB_SSL_CA}
         
     DATABASES = {
         'default': {
