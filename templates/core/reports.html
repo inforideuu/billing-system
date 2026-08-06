@@ -175,6 +175,12 @@
                                 <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-600 text-xs font-bold uppercase tracking-wider border border-emerald-200">{{ invoice.status|default:"PAID" }}</span>
                             </td>
                         </tr>
+                        <tr id="salesEmptyRow" class="hidden">
+                            <td colspan="6" class="py-12 text-center text-slate-400">
+                                <i class="fas fa-search text-3xl mb-3 opacity-30 block"></i>
+                                No invoices match your filters.
+                            </td>
+                        </tr>
                         {% empty %}
                         <tr>
                             <td colspan="6" class="py-12 text-center text-slate-400">
@@ -220,6 +226,12 @@
                                 {% endfor %}
                             </td>
                             <td class="py-4 px-4 font-black text-rose-600">₹{{ pur.total_amount }}</td>
+                        </tr>
+                        <tr id="purchasesEmptyRow" class="hidden">
+                            <td colspan="6" class="py-12 text-center text-slate-400">
+                                <i class="fas fa-search text-3xl mb-3 opacity-30 block"></i>
+                                No procurement records match your filters.
+                            </td>
                         </tr>
                         {% empty %}
                         <tr>
@@ -330,6 +342,12 @@
                             <td class="py-4 px-4 font-medium text-slate-600">₹{{ invoice.sgst_amount }}</td>
                             <td class="py-4 px-4 font-bold text-rose-600">₹{{ invoice.gst_amount }}</td>
                             <td class="py-4 px-4 font-bold text-slate-800">₹{{ invoice.total_amount }}</td>
+                        </tr>
+                        <tr id="gstEmptyRow" class="hidden">
+                            <td colspan="7" class="py-12 text-center text-slate-400">
+                                <i class="fas fa-search text-3xl mb-3 opacity-30 block"></i>
+                                No GST records match your filters.
+                            </td>
                         </tr>
                         {% empty %}
                         <tr>
@@ -516,6 +534,10 @@
         let totalTaxable = 0;
 
         let slabsMap = {};
+        
+        let salesVisible = 0;
+        let purchasesVisible = 0;
+        let gstVisible = 0;
 
         // 1. Filter Sales
         document.querySelectorAll('.sales-row').forEach(row => {
@@ -531,10 +553,17 @@
             if (matchSearch && matchPayment && matchDate) {
                 row.classList.remove('hidden');
                 totalSales += amount;
+                salesVisible++;
             } else {
                 row.classList.add('hidden');
             }
         });
+        
+        const salesEmpty = document.getElementById('salesEmptyRow');
+        if (salesEmpty) {
+            if (salesVisible === 0) salesEmpty.classList.remove('hidden');
+            else salesEmpty.classList.add('hidden');
+        }
 
         // 2. Filter Purchases
         document.querySelectorAll('.purchase-row').forEach(row => {
@@ -550,10 +579,17 @@
             if (matchSearch && matchPayment && matchDate) {
                 row.classList.remove('hidden');
                 totalPurchases += amount;
+                purchasesVisible++;
             } else {
                 row.classList.add('hidden');
             }
         });
+        
+        const purchasesEmpty = document.getElementById('purchasesEmptyRow');
+        if (purchasesEmpty) {
+            if (purchasesVisible === 0) purchasesEmpty.classList.remove('hidden');
+            else purchasesEmpty.classList.add('hidden');
+        }
 
         // 3. Filter GST Matrix and aggregate slabs
         document.querySelectorAll('.gst-invoice-row').forEach(row => {
@@ -574,6 +610,7 @@
                 totalGst += gst;
                 const taxable = amount - gst;
                 totalTaxable += taxable;
+                gstVisible++;
 
                 // Determine rate slab
                 let rate = 0;
@@ -598,6 +635,12 @@
                 row.classList.add('hidden');
             }
         });
+        
+        const gstEmpty = document.getElementById('gstEmptyRow');
+        if (gstEmpty) {
+            if (gstVisible === 0) gstEmpty.classList.remove('hidden');
+            else gstEmpty.classList.add('hidden');
+        }
 
         // Update operational total labels
         document.getElementById('sumTotalSales').textContent = '₹' + totalSales.toFixed(2);
@@ -622,7 +665,7 @@
         slabsTbody.innerHTML = '';
         const sortedRates = Object.keys(slabsMap).sort((a, b) => a - b);
         if (sortedRates.length === 0) {
-            slabsTbody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-slate-400 italic">No transactional GST entries logged yet.</td></tr>`;
+            slabsTbody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-slate-400 italic">No GSTR-1 transactional GST entries logged yet.</td></tr>`;
         } else {
             sortedRates.forEach(rate => {
                 const data = slabsMap[rate];
