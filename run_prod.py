@@ -85,8 +85,57 @@ if __name__ == "__main__":
     
     # 2. Automatically create default Business and Admin User if none exists
     from django.contrib.auth.models import User
-    from core.models import Business, UserProfile
+    from core.models import Business, UserProfile, Plan
     
+    # Ensure default Plans exist
+    if Plan.objects.count() == 0:
+        print("Seeding plans...")
+        basic = Plan.objects.create(
+            name="Basic",
+            price_3_months=1199.00,
+            price_6_months=2199.00,
+            price_year=3999.00,
+            max_cashiers=2,
+            description="Essential features for small shops. Includes core billing, simple inventory, and basic dashboard analytics.",
+            has_festival_offers=False,
+            has_batch_tracking=False,
+            has_smart_insights=False,
+            has_forecasting=False,
+            has_dynamic_pricing=False,
+            has_advanced_reports=False
+        )
+        standard = Plan.objects.create(
+            name="Standard",
+            price_3_months=2699.00,
+            price_6_months=4999.00,
+            price_year=8999.00,
+            max_cashiers=10,
+            description="Perfect for growing businesses. Adds supplier management, purchase orders, batch & expiry tracking, festival offers, and advanced reports.",
+            has_festival_offers=True,
+            has_batch_tracking=True,
+            has_smart_insights=False,
+            has_forecasting=False,
+            has_dynamic_pricing=False,
+            has_advanced_reports=True
+        )
+        premium = Plan.objects.create(
+            name="Premium",
+            price_3_months=5399.00,
+            price_6_months=9999.00,
+            price_year=17999.00,
+            max_cashiers=-1,
+            description="The complete intelligent store solution. Unlocks all features including Smart AI Insights, Demand Forecasting, Dynamic Auto-Pricing, and unlimited cashier accounts.",
+            has_festival_offers=True,
+            has_batch_tracking=True,
+            has_smart_insights=True,
+            has_forecasting=True,
+            has_dynamic_pricing=True,
+            has_advanced_reports=True
+        )
+        print("Plans seeded successfully!")
+    else:
+        premium = Plan.objects.filter(name="Premium").first()
+
     # Ensure default Business exists
     biz, created = Business.objects.get_or_create(
         name="Zenelait Infotech",
@@ -94,9 +143,17 @@ if __name__ == "__main__":
             'owner_name': 'Annamalai',
             'address': 'Chennai, Tamil Nadu',
             'phone': '9884264816',
-            'is_subscription_active': True
+            'is_subscription_active': True,
+            'subscription_plan': premium
         }
     )
+    
+    if created or not biz.subscription_plan:
+        from django.utils import timezone
+        from datetime import timedelta
+        biz.subscription_plan = premium
+        biz.subscription_end_date = timezone.now() + timedelta(days=365)
+        biz.save()
     
     # Ensure super admin 'demo_user' exists in production database
     if not User.objects.filter(username='demo_user').exists():

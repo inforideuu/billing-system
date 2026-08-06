@@ -853,21 +853,111 @@
             .catch(e => console.error("Error dismissing notification:", e));
         }
         
-        // Initial fetch on page load to set badge count
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                fetch('/intelligence/api/notifications/')
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status === 'success' && data.count > 0) {
-                            const badge = document.getElementById('notificationBadge');
-                            if(badge) {
-                                badge.textContent = data.count;
+        // Sound synthesis for notifications using Web Audio API
+        let previousNotificationCount = 0;
+        
+        function playChimeSound() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const audioCtx = new AudioContext();
+                
+                const playTone = (freq, delay, duration, volume) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+                    
+                    gain.gain.setValueAtTime(0, audioCtx.currentTime + delay);
+                    gain.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + delay + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
+                    
+                    osc.start(audioCtx.currentTime + delay);
+                    osc.stop(audioCtx.currentTime + delay + duration);
+                };
+                
+                // Play a sweet, premium E5-A5-C6 triple chime
+                playTone(659.25, 0, 0.3, 0.1);      // E5
+                playTone(880.00, 0.08, 0.35, 0.08);   // A5
+                playTone(1046.50, 0.16, 0.4, 0.06);   // C6
+            } catch (e) {
+                console.warn("Audio Context blocked or not supported:", e);
+            }
+        }
+
+        function checkNotificationsLoop() {
+            fetch('/intelligence/api/notifications/')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const count = data.count;
+                        const badge = document.getElementById('notificationBadge');
+                        const label = document.getElementById('notificationCountLabel');
+                        
+                        if (count > 0) {
+                            if (badge) {
+                                badge.textContent = count;
                                 badge.classList.remove('hidden');
-                                document.getElementById('notificationCountLabel').textContent = data.count + ' New';
+                            }
+                            if (label) {
+                                label.textContent = count + ' New';
+                            }
+                            
+                            // Play sound if new notifications are detected
+                            if (count > previousNotificationCount) {
+                                playChimeSound();
+                            }
+                        } else {
+                            if (badge) {
+                                badge.classList.add('hidden');
+                            }
+                            if (label) {
+                                label.textContent = '0 New';
                             }
                         }
-                    }).catch(e => {});
+                        previousNotificationCount = count;
+                    }
+                })
+                .catch(e => {});
+        }
+
+        // Initial setup on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Mobile Sidebar controls
+            const openSidebarBtn = document.getElementById('openSidebar');
+            const closeSidebarBtn = document.getElementById('closeSidebar');
+            const sidebar = document.getElementById('sidebar');
+            
+            if (openSidebarBtn && sidebar) {
+                openSidebarBtn.addEventListener('click', function() {
+                    sidebar.classList.remove('-translate-x-full');
+                    sidebar.classList.add('translate-x-0');
+                });
+            }
+            
+            if (closeSidebarBtn && sidebar) {
+                closeSidebarBtn.addEventListener('click', function() {
+                    sidebar.classList.remove('translate-x-0');
+                    sidebar.classList.add('-translate-x-full');
+                });
+            }
+            
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth < 1024 && sidebar && !sidebar.contains(event.target) && openSidebarBtn && !openSidebarBtn.contains(event.target)) {
+                    sidebar.classList.remove('translate-x-0');
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+            
+            // 2. Start notifications checking
+            setTimeout(() => {
+                checkNotificationsLoop();
+                // Check for updates every 20 seconds
+                setInterval(checkNotificationsLoop, 20000);
             }, 1000);
         });
     </script>
