@@ -47,7 +47,9 @@ if __name__ == "__main__":
             'user': db_user,
             'passwd': db_password,
         }
-        if db_ssl_ca:
+        if os.name == 'nt':
+            conn_params['ssl'] = {'ssl_mode': 'REQUIRED'}
+        elif db_ssl_ca:
             conn_params['ssl'] = {'ca': db_ssl_ca}
             
         print(f"Connecting to TiDB server to ensure database '{db_name}' exists...")
