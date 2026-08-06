@@ -106,7 +106,17 @@ def reports(request):
         taxable_value = float(total_sales) - float(total_gst)
         
         # Dynamic GST Slabs Breakdown
-        slab_data = filter_by_business(InvoiceItem.objects.all(), request).values('gst_rate').annotate(
+        business = get_business(request)
+        if request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.role == 'SUPER_ADMIN'):
+            business_id = request.GET.get('business_id') or (request.session.get('view_business_id') if hasattr(request, 'session') else None)
+            if business_id:
+                items_qs = InvoiceItem.objects.filter(invoice__business_id=business_id)
+            else:
+                items_qs = InvoiceItem.objects.all()
+        else:
+            items_qs = InvoiceItem.objects.filter(invoice__business=business)
+            
+        slab_data = items_qs.values('gst_rate').annotate(
             total_val=Sum('total_price')
         ).order_by('gst_rate')
         
