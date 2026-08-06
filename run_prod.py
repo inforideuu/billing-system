@@ -9,6 +9,53 @@ if __name__ == "__main__":
     
     # 1. Setup Django and run database migrations automatically
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'retail_billing.settings')
+    
+    # Ensure database exists on TiDB Cloud before django.setup() initializes connection
+    import MySQLdb
+    from pathlib import Path
+    db_name = os.environ.get('DB_NAME') or 'test'
+    db_user = os.environ.get('DB_USER') or '2hi2kChfmfuNZXu.root'
+    db_password = os.environ.get('DB_PASSWORD') or 'H1wlE5nMhhWM4Qab'
+    db_host = os.environ.get('DB_HOST') or 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com'
+    db_port = int(os.environ.get('DB_PORT') or '4000')
+    db_ssl_ca = os.environ.get('DB_SSL_CA')
+    
+    if not db_ssl_ca:
+        base_dir = Path(__file__).resolve().parent
+        local_ca = base_dir / 'ca.pem'
+        if local_ca.exists():
+            db_ssl_ca = str(local_ca)
+        else:
+            for path in [
+                '/etc/ssl/certs/ca-certificates.crt',
+                '/etc/pki/tls/certs/ca-bundle.crt',
+                '/etc/ssl/ca-bundle.pem',
+                '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem',
+            ]:
+                if os.path.exists(path):
+                    db_ssl_ca = path
+                    break
+                    
+    try:
+        conn_params = {
+            'host': db_host,
+            'port': db_port,
+            'user': db_user,
+            'passwd': db_password,
+        }
+        if db_ssl_ca:
+            conn_params['ssl'] = {'ca': db_ssl_ca}
+            
+        print(f"Connecting to TiDB server to ensure database '{db_name}' exists...")
+        conn = MySQLdb.connect(**conn_params)
+        cursor = conn.cursor()
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{db_name}` CHARACTER SET utf8mb4;")
+        print(f"Database '{db_name}' is ready.")
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        print(f"Database auto-creation warning: {str(e)}")
+
     django.setup()
     
     print("Checking database state...")
