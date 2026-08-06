@@ -146,7 +146,7 @@ if DATABASE_URL and (DATABASE_URL.startswith('mysql://') or DATABASE_URL.startsw
                     
                 DATABASES = {
                     'default': {
-                        'ENGINE': 'django.db.backends.mysql',
+                        'ENGINE': 'django_tidb',
                         'NAME': db_name,
                         'USER': user,
                         'PASSWORD': password,
@@ -171,7 +171,7 @@ if not db_configured:
         
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',
+            'ENGINE': 'django_tidb',
             'NAME': DB_NAME if DB_NAME else 'test',
             'USER': DB_USER if DB_USER else '2hi2kChfmfuNZXu.root',
             'PASSWORD': DB_PASSWORD if DB_PASSWORD else 'H1wlE5nMhhWM4Qab',
