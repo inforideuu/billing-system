@@ -145,12 +145,8 @@ if DATABASE_URL and (DATABASE_URL.startswith('mysql://') or DATABASE_URL.startsw
                     'charset': 'utf8mb4',
                     'use_unicode': True,
                 }
-                if os.name == 'nt':
-                    options['ssl'] = {}  # Use Windows System Trust Store (Schannel)
-                elif DB_SSL_CA:
+                if DB_SSL_CA:
                     options['ssl'] = {'ca': DB_SSL_CA}
-                else:
-                    options['ssl'] = {}  # Fallback to default secure connection
                     
                 DATABASES = {
                     'default': {
@@ -174,12 +170,8 @@ if not db_configured:
         'charset': 'utf8mb4',
         'use_unicode': True,
     }
-    if os.name == 'nt':
-        options['ssl'] = {}  # Use Windows System Trust Store (Schannel)
-    elif DB_SSL_CA:
+    if DB_SSL_CA:
         options['ssl'] = {'ca': DB_SSL_CA}
-    else:
-        options['ssl'] = {}  # Fallback to default secure connection
         
     DATABASES = {
         'default': {
