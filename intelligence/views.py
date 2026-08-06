@@ -184,37 +184,40 @@ def api_get_notifications(request):
     Returns the real-time operational alerts (low stock, expiring soon) 
     for the global notification dropdown panel.
     """
+    # 1. Super Admins receive system-wide operational alerts (pending payments, demo requests)
+    if hasattr(request.user, 'profile') and request.user.profile.role == 'SUPER_ADMIN':
+        from core.models import SubscriptionPayment, DemoRequest
+        alerts = []
+        
+        # Pending payments
+        pending_payments = SubscriptionPayment.objects.filter(status='PENDING')
+        for p in pending_payments:
+            alerts.append({
+                'type': 'PENDING_PAYMENT',
+                'title': 'Pending UPI Verification',
+                'message': f"Business '{p.business.name}' submitted UTR: {p.upi_utr_number} for Rs. {p.amount}",
+                'key': f"pending_pay_{p.id}",
+                'badge_color': 'bg-amber-100 text-amber-700',
+                'redirect_url': '/super-admin/'
+            })
+            
+        # Pending demo requests
+        pending_demos = DemoRequest.objects.filter(status='PENDING')
+        for d in pending_demos:
+            alerts.append({
+                'type': 'PENDING_DEMO',
+                'title': 'Pending Demo Request',
+                'message': f"Business '{d.business_name}' by '{d.owner_name}' is requesting 3-day access.",
+                'key': f"pending_demo_{d.id}",
+                'badge_color': 'bg-indigo-100 text-indigo-700',
+                'redirect_url': '/super-admin/demo-requests/'
+            })
+            
+        return JsonResponse({'status': 'success', 'count': len(alerts), 'alerts': alerts})
+        
+    # 2. Regular Admins (Shop Owners) receive catalog and inventory alerts
     business = get_business(request)
     if not business:
-        if hasattr(request.user, 'profile') and request.user.profile.role == 'SUPER_ADMIN':
-            from core.models import SubscriptionPayment, DemoRequest
-            alerts = []
-            
-            # 1. Pending payments
-            pending_payments = SubscriptionPayment.objects.filter(status='PENDING')
-            for p in pending_payments:
-                alerts.append({
-                    'type': 'PENDING_PAYMENT',
-                    'title': 'Pending UPI Verification',
-                    'message': f"Business '{p.business.name}' submitted UTR: {p.upi_utr_number} for Rs. {p.amount}",
-                    'key': f"pending_pay_{p.id}",
-                    'badge_color': 'bg-amber-100 text-amber-700',
-                    'redirect_url': '/super-admin/'
-                })
-                
-            # 2. Pending demo requests
-            pending_demos = DemoRequest.objects.filter(status='PENDING')
-            for d in pending_demos:
-                alerts.append({
-                    'type': 'PENDING_DEMO',
-                    'title': 'Pending Demo Request',
-                    'message': f"Business '{d.business_name}' by '{d.owner_name}' is requesting 3-day access.",
-                    'key': f"pending_demo_{d.id}",
-                    'badge_color': 'bg-indigo-100 text-indigo-700',
-                    'redirect_url': '/super-admin/demo-requests/'
-                })
-                
-            return JsonResponse({'status': 'success', 'count': len(alerts), 'alerts': alerts})
         return JsonResponse({'status': 'error', 'message': 'No active business.'})
         
     insights = get_smart_insights(request, business)
