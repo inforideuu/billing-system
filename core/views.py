@@ -283,12 +283,12 @@ def homepage(request):
 @login_required(login_url='/accounts/login/')
 @role_required(['SUPER_ADMIN'])
 def super_admin_dashboard(request):
-    businesses = Business.objects.all().annotate(
+    businesses = Business.objects.exclude(name="Zenelait Infotech").annotate(
         total_invoices=Count('invoices', distinct=True),
         total_revenue=Sum('invoices__total_amount')
     )
-    total_businesses = Business.objects.count()
-    active_subs = Business.objects.filter(is_subscription_active=True).count()
+    total_businesses = Business.objects.exclude(name="Zenelait Infotech").count()
+    active_subs = Business.objects.exclude(name="Zenelait Infotech").filter(is_subscription_active=True).count()
     total_rev_agg = Invoice.objects.aggregate(Sum('total_amount'))['total_amount__sum'] or 0.00
     plans = Plan.objects.all()
     
