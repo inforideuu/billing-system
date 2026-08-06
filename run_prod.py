@@ -26,15 +26,19 @@ if __name__ == "__main__":
         if local_ca.exists():
             db_ssl_ca = str(local_ca)
         else:
-            for path in [
-                '/etc/ssl/certs/ca-certificates.crt',
-                '/etc/pki/tls/certs/ca-bundle.crt',
-                '/etc/ssl/ca-bundle.pem',
-                '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem',
-            ]:
-                if os.path.exists(path):
-                    db_ssl_ca = path
-                    break
+            try:
+                import certifi
+                db_ssl_ca = certifi.where()
+            except ImportError:
+                for path in [
+                    '/etc/ssl/certs/ca-certificates.crt',
+                    '/etc/pki/tls/certs/ca-bundle.crt',
+                    '/etc/ssl/ca-bundle.pem',
+                    '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem',
+                ]:
+                    if os.path.exists(path):
+                        db_ssl_ca = path
+                        break
                     
     try:
         conn_params = {
