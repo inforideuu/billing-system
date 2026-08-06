@@ -95,11 +95,23 @@ DB_HOST = os.environ.get('DB_HOST')
 DB_PORT = os.environ.get('DB_PORT', '3306')
 DB_SSL_CA = os.environ.get('DB_SSL_CA')
 
-# If DB_SSL_CA is not set but a ca.pem file exists in the root directory, use it
+# If DB_SSL_CA is not set, check local path or standard Linux system paths
 if not DB_SSL_CA:
-    fallback_ca = os.path.join(BASE_DIR, 'ca.pem')
-    if os.path.exists(fallback_ca):
-        DB_SSL_CA = fallback_ca
+    local_ca = os.path.join(BASE_DIR, 'ca.pem')
+    if os.path.exists(local_ca):
+        DB_SSL_CA = local_ca
+    else:
+        # Standard system CA bundle paths on various Linux distributions (like Render's environment)
+        linux_ca_paths = [
+            '/etc/ssl/certs/ca-certificates.crt',                  # Debian/Ubuntu/Render
+            '/etc/pki/tls/certs/ca-bundle.crt',                    # Fedora/RHEL 6
+            '/etc/ssl/ca-bundle.pem',                              # OpenSUSE
+            '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem',    # CentOS/RHEL 7/8
+        ]
+        for path in linux_ca_paths:
+            if os.path.exists(path):
+                DB_SSL_CA = path
+                break
 
 db_configured = False
 
