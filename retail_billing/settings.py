@@ -172,7 +172,7 @@ if not db_configured:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': DB_NAME if DB_NAME else 'sys',
+            'NAME': DB_NAME if DB_NAME else 'test',
             'USER': DB_USER if DB_USER else '2hi2kChfmfuNZXu.root',
             'PASSWORD': DB_PASSWORD if DB_PASSWORD else 'H1wlE5nMhhWM4Qab',
             'HOST': DB_HOST if DB_HOST else 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com',
