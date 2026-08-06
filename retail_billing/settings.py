@@ -84,7 +84,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'retail_billing.wsgi.application'
 
 
-# Database Configuration (MySQL)
+# Database Configuration (MySQL / TiDB)
 import os
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -93,13 +93,25 @@ DB_USER = os.environ.get('DB_USER')
 DB_PASSWORD = os.environ.get('DB_PASSWORD')
 DB_HOST = os.environ.get('DB_HOST')
 DB_PORT = os.environ.get('DB_PORT', '3306')
+DB_SSL_CA = os.environ.get('DB_SSL_CA')
+
+# If DB_SSL_CA is not set but a ca.pem file exists in the root directory, use it
+if not DB_SSL_CA:
+    fallback_ca = os.path.join(BASE_DIR, 'ca.pem')
+    if os.path.exists(fallback_ca):
+        DB_SSL_CA = fallback_ca
 
 db_configured = False
 
-# 1. Parse MySQL DATABASE_URL
-if DATABASE_URL and DATABASE_URL.startswith('mysql://'):
+# 1. Parse MySQL / TiDB DATABASE_URL
+if DATABASE_URL and (DATABASE_URL.startswith('mysql://') or DATABASE_URL.startswith('mysql+ssl://')):
     try:
-        url = DATABASE_URL[len('mysql://'):]
+        url = DATABASE_URL
+        if url.startswith('mysql+ssl://'):
+            url = url[len('mysql+ssl://'):]
+        else:
+            url = url[len('mysql://'):]
+            
         if '@' in url:
             credentials, location = url.split('@', 1)
             user, password = credentials.split(':', 1)
@@ -112,6 +124,14 @@ if DATABASE_URL and DATABASE_URL.startswith('mysql://'):
                 else:
                     host = host_port
                     port = '3306'
+                
+                options = {
+                    'charset': 'utf8mb4',
+                    'use_unicode': True,
+                }
+                if DB_SSL_CA:
+                    options['ssl'] = {'ca': DB_SSL_CA}
+                    
                 DATABASES = {
                     'default': {
                         'ENGINE': 'django.db.backends.mysql',
@@ -120,34 +140,35 @@ if DATABASE_URL and DATABASE_URL.startswith('mysql://'):
                         'PASSWORD': password,
                         'HOST': host,
                         'PORT': port,
-                        'OPTIONS': {
-                            'charset': 'utf8mb4',
-                            'use_unicode': True,
-                        }
+                        'OPTIONS': options
                     }
                 }
                 db_configured = True
-                print("[Database] Using production/cloud MySQL database parsed from DATABASE_URL.")
+                print("[Database] Using production/cloud MySQL/TiDB database parsed from DATABASE_URL.")
     except Exception as e:
-        print(f"[Database Error] Failed to parse MySQL DATABASE_URL: {str(e)}")
+        print(f"[Database Error] Failed to parse MySQL/TiDB DATABASE_URL: {str(e)}")
 
-# 2. Default Fallback Configuration (MySQL Only)
+# 2. Default Fallback Configuration (MySQL / TiDB)
 if not db_configured:
+    options = {
+        'charset': 'utf8mb4',
+        'use_unicode': True,
+    }
+    if DB_SSL_CA:
+        options['ssl'] = {'ca': DB_SSL_CA}
+        
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': DB_NAME if DB_NAME else 'retail_billing_db',
-            'USER': DB_USER if DB_USER else 'root',
-            'PASSWORD': DB_PASSWORD if DB_PASSWORD else 'root',
-            'HOST': DB_HOST if DB_HOST else '127.0.0.1',
-            'PORT': DB_PORT if DB_PORT else '3306',
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-                'use_unicode': True,
-            }
+            'NAME': DB_NAME if DB_NAME else 'sys',
+            'USER': DB_USER if DB_USER else '2hi2kChfmfuNZXu.root',
+            'PASSWORD': DB_PASSWORD if DB_PASSWORD else 'H1wlE5nMhhWM4Qab',
+            'HOST': DB_HOST if DB_HOST else 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com',
+            'PORT': DB_PORT if DB_PORT else '4000',
+            'OPTIONS': options
         }
     }
-    print("[Database] Configured for MySQL.")
+    print("[Database] Configured for MySQL/TiDB.")
 
 
 
