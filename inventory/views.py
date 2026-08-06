@@ -74,6 +74,10 @@ def add_purchase(request):
                 unit_cost=unit_cost
             )
             
+            # Dynamically increment inventory stock count
+            product.stock_quantity += quantity
+            product.save()
+            
             return JsonResponse({'status': 'success', 'purchase_id': purchase.id})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
