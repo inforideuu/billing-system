@@ -11,6 +11,27 @@ if __name__ == "__main__":
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'retail_billing.settings')
     django.setup()
     
+    print("Checking database state...")
+    from django.db import connection
+    try:
+        with connection.cursor() as cursor:
+            # Check if django_migrations exists
+            cursor.execute("SHOW TABLES LIKE 'django_migrations'")
+            migrations_exists = cursor.fetchone()
+            
+            # If django_migrations does not exist, but other tables do, clear the dirty database state
+            if not migrations_exists:
+                print("django_migrations table not found. Cleaning up potential dirty database state...")
+                cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
+                cursor.execute("SHOW TABLES;")
+                tables = [row[0] for row in cursor.fetchall()]
+                for table in tables:
+                    cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
+                    print(f"Dropped conflicting table: {table}")
+                cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
+    except Exception as db_err:
+        print(f"Database pre-check warning: {str(db_err)}")
+        
     print("Running database migrations...")
     from django.core.management import call_command
     call_command('migrate', no_input=True)
