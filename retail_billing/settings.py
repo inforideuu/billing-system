@@ -156,7 +156,8 @@ if DATABASE_URL and (DATABASE_URL.startswith('mysql://') or DATABASE_URL.startsw
                         'PASSWORD': password,
                         'HOST': host,
                         'PORT': port,
-                        'OPTIONS': options
+                        'OPTIONS': options,
+                        'CONN_MAX_AGE': 300,
                     }
                 }
                 db_configured = True
@@ -181,7 +182,8 @@ if not db_configured:
             'PASSWORD': DB_PASSWORD if DB_PASSWORD else 'H1wlE5nMhhWM4Qab',
             'HOST': DB_HOST if DB_HOST else 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com',
             'PORT': DB_PORT if DB_PORT else '4000',
-            'OPTIONS': options
+            'OPTIONS': options,
+            'CONN_MAX_AGE': 300,
         }
     }
     print("[Database] Configured for MySQL/TiDB.")
