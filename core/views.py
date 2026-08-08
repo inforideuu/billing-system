@@ -463,6 +463,47 @@ def add_cashier(request):
         
     return render(request, 'core/add_cashier.html', {'business': business})
 
+@login_required(login_url='/accounts/login/')
+@role_required(['ADMIN'])
+def edit_cashier(request, cashier_id):
+    business = get_business(request)
+    profile = get_object_or_404(UserProfile, id=cashier_id, business=business, role='CASHIER')
+    user = profile.user
+    
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password')
+        
+        if not username:
+            return render(request, 'core/edit_cashier.html', {'business': business, 'staff': profile, 'error': 'Username is required.'})
+            
+        if User.objects.filter(username=username).exclude(id=user.id).exists():
+            return render(request, 'core/edit_cashier.html', {'business': business, 'staff': profile, 'error': 'Username already taken.'})
+            
+        user.username = username
+        user.email = email
+        if password and password.strip():
+            user.set_password(password)
+        user.save()
+        
+        messages.success(request, f"Cashier account '{username}' updated successfully!")
+        return redirect('manage_cashiers')
+        
+    return render(request, 'core/edit_cashier.html', {'business': business, 'staff': profile})
+
+@login_required(login_url='/accounts/login/')
+@role_required(['ADMIN'])
+def delete_cashier(request, cashier_id):
+    business = get_business(request)
+    profile = get_object_or_404(UserProfile, id=cashier_id, business=business, role='CASHIER')
+    user = profile.user
+    username = user.username
+    user.delete()
+    messages.success(request, f"Cashier account '{username}' deleted successfully.")
+    return redirect('manage_cashiers')
+
+
 
 # === PLAN MANAGEMENT (SUPER ADMIN CRUD) ===
 

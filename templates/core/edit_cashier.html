@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Cashier | {{ business.name }}{% endblock %}
+{% block page_title %}Edit Staff Account{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Header Return Navigation -->
+    <a href="{% url 'manage_cashiers' %}" class="inline-flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-slate-800 font-semibold text-sm transition-colors mb-6 group">
+        <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+        Back to Staff List
+    </a>
+
+    <!-- Form Core Card -->
+    <div class="glass-card relative overflow-hidden rounded-3xl border border-white/50 shadow-xl animate-slide-up">
+        <div class="absolute -right-20 -top-20 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-orange-300/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- Visual Header Banner -->
+        <div class="bg-gradient-to-br from-rose-500/5 to-orange-500/5 px-8 py-6 border-b border-slate-100 flex items-center gap-4 relative z-10">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-orange-500 text-white flex items-center justify-center text-2xl shadow-md shadow-rose-500/20">
+                <i class="fas fa-user-edit"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">Edit Cashier Account</h2>
+                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider mt-0.5">Account: <span class="text-rose-500 font-bold">{{ staff.user.username }}</span></p>
+            </div>
+        </div>
+
+        <div class="p-8 relative z-10">
+            {% if error %}
+            <div class="bg-red-50 border border-red-100 text-red-600 rounded-2xl p-4 flex items-start gap-3 text-sm font-medium mb-6 animate-pulse">
+                <i class="fas fa-exclamation-circle text-lg mt-0.5"></i>
+                <p>{{ error }}</p>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'edit_cashier' staff.id %}" class="space-y-6">
+                {% csrf_token %}
+
+                <div class="space-y-4">
+                    <!-- Username -->
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Access Username</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <input type="text" name="username" required value="{{ staff.user.username }}" placeholder="e.g., store_cashier_1" class="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-2xl text-sm font-medium transition-all focus:ring-2 focus:ring-rose-500 focus:border-transparent bg-white/70 focus:bg-white focus:outline-none shadow-inner-sm">
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1.5 ml-1">Username must be unique across the system.</p>
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Corporate Email</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                            <input type="email" name="email" required value="{{ staff.user.email }}" placeholder="e.g., employee@company.com" class="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-2xl text-sm font-medium transition-all focus:ring-2 focus:ring-rose-500 focus:border-transparent bg-white/70 focus:bg-white focus:outline-none shadow-inner-sm">
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Update Password (Optional)</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <input type="password" name="password" placeholder="••••••••" class="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-2xl text-sm font-medium transition-all focus:ring-2 focus:ring-rose-500 focus:border-transparent bg-white/70 focus:bg-white focus:outline-none shadow-inner-sm">
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1.5 ml-1">Leave blank to keep the current password.</p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-end gap-4 pt-6 border-t border-slate-100">
+                    <a href="{% url 'manage_cashiers' %}" class="px-6 py-3 border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-8 py-3 bg-gradient-to-r from-rose-500 to-orange-500 text-white rounded-2xl shadow-lg shadow-rose-500/20 hover:shadow-rose-500/30 font-extrabold flex items-center gap-2 hover:scale-[1.02] transition-all text-sm">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

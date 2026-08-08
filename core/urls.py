@@ -25,6 +25,8 @@ urlpatterns = [
     # Admin URLs
     path('store/cashiers/', views.manage_cashiers, name='manage_cashiers'),
     path('store/cashiers/add/', views.add_cashier, name='add_cashier'),
+    path('store/cashiers/edit/<int:cashier_id>/', views.edit_cashier, name='edit_cashier'),
+    path('store/cashiers/delete/<int:cashier_id>/', views.delete_cashier, name='delete_cashier'),
     path('subscription/purchase/', views.subscription_purchase, name='subscription_purchase'),
     path('subscription/checkout/<int:plan_id>/', views.subscription_checkout, name='subscription_checkout'),
     path('subscription/payment-callback/', views.payment_callback, name='payment_callback'),

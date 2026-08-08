@@ -152,8 +152,11 @@
                         <!-- Dropdown Panel -->
                         <div id="notificationDropdown" class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 hidden z-[60] overflow-hidden origin-top-right transform transition-all duration-200">
                             <div class="bg-slate-50 border-b border-slate-100 px-4 py-3 flex justify-between items-center">
-                                <h3 class="font-bold text-slate-800 text-sm">Alerts & Notifications</h3>
-                                <span class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold" id="notificationCountLabel">0</span>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="font-bold text-slate-800 text-sm">Alerts & Notifications</h3>
+                                    <span class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold" id="notificationCountLabel">0</span>
+                                </div>
+                                <button onclick="clearAllNotifications(event)" class="text-[10px] font-bold text-slate-500 hover:text-red-500 transition-colors uppercase tracking-wide">Clear All</button>
                             </div>
                             <div class="max-h-80 overflow-y-auto scrollbar-hide bg-white" id="notificationList">
                                 <!-- Notifications will be injected here via JS -->
@@ -275,15 +278,21 @@
                 <button onclick="submitSuggestedQuery('Show pending demo requests')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">✨ Pending Demos</button>
                 <button onclick="submitSuggestedQuery('Show pending payments')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">💳 Pending Payments</button>
                 <button onclick="submitSuggestedQuery('Show active plans')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">📋 Active Plans</button>
+                <button onclick="submitSuggestedQuery('help')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">❓ System Help</button>
                 {% elif request.user.profile.role == 'CASHIER' %}
                 <button onclick="submitSuggestedQuery('Show today\'s sales')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">📊 Today's Sales</button>
                 <button onclick="submitSuggestedQuery('Which products are low in stock?')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">⚠️ Low Stock</button>
                 <button onclick="submitSuggestedQuery('Price check product')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">🏷️ Price Check</button>
+                <button onclick="submitSuggestedQuery('Top selling products')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">🔥 Top Sellers</button>
+                <button onclick="submitSuggestedQuery('help')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">❓ Help</button>
                 {% else %}
                 <button onclick="submitSuggestedQuery('Show today\'s sales')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">📊 Today's Sales</button>
                 <button onclick="submitSuggestedQuery('Which products are low in stock?')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">⚠️ Low Stock</button>
                 <button onclick="submitSuggestedQuery('Top selling products')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">🔥 Top Sellers</button>
-                <button onclick="submitSuggestedQuery('Pending payments')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">⏳ Unpaid Bills</button>
+                <button onclick="submitSuggestedQuery('Are there any pending payments?')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">⏳ Pending Invoices</button>
+                <button onclick="submitSuggestedQuery('Last month report')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">📅 Last Month Report</button>
+                <button onclick="submitSuggestedQuery('suggest restock')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">📦 Restocking Guide</button>
+                <button onclick="submitSuggestedQuery('help')" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors uppercase tracking-wide">❓ Help</button>
                 {% endif %}
             </div>
             
@@ -851,6 +860,34 @@
                 }
             })
             .catch(e => console.error("Error dismissing notification:", e));
+        }
+
+        function clearAllNotifications(event) {
+            if (event) event.stopPropagation();
+            fetch('/intelligence/api/notifications/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success' && data.alerts.length > 0) {
+                        const promises = data.alerts.map(alert => {
+                            return fetch('/intelligence/api/notifications/dismiss/', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': '{{ csrf_token }}'
+                                },
+                                body: JSON.stringify({ alert_key: alert.key })
+                            });
+                        });
+                        Promise.all(promises)
+                            .then(() => {
+                                fetchNotifications();
+                                if (typeof showToast === 'function') {
+                                    showToast('All notifications cleared.', 'success');
+                                }
+                            })
+                            .catch(e => console.error("Error clearing notifications:", e));
+                    }
+                });
         }
         
         // Sound synthesis for notifications using Web Audio API

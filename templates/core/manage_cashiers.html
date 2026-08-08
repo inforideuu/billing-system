@@ -54,6 +54,16 @@
                 <span class="text-xs font-bold text-slate-600">{{ staff.user.date_joined|date:"M d, Y" }}</span>
             </div>
         </div>
+        
+        <!-- Action Buttons -->
+        <div class="mt-4 flex gap-2 pt-3 border-t border-slate-100 justify-end">
+            <a href="{% url 'edit_cashier' staff.id %}" class="px-3 py-1.5 bg-slate-50 hover:bg-rose-50 text-slate-600 hover:text-rose-500 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{% url 'delete_cashier' staff.id %}" onclick="return confirm('Are you sure you want to delete cashier account \'{{ staff.user.username }}\'? This action cannot be undone.')" class="px-3 py-1.5 bg-slate-50 hover:bg-red-50 text-slate-600 hover:text-red-500 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all">
+                <i class="fas fa-trash-alt"></i> Delete
+            </a>
+        </div>
     </div>
     {% empty %}
     <div class="col-span-full glass-card py-16 text-center text-slate-400 flex flex-col items-center justify-center">

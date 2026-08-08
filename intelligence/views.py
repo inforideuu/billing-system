@@ -187,31 +187,37 @@ def api_get_notifications(request):
     # 1. Super Admins receive system-wide operational alerts (pending payments, demo requests)
     if hasattr(request.user, 'profile') and request.user.profile.role == 'SUPER_ADMIN':
         from core.models import SubscriptionPayment, DemoRequest
+        from .models import DismissedAlert
+        dismissed_keys = set(DismissedAlert.objects.filter(business=None).values_list('alert_key', flat=True))
         alerts = []
         
         # Pending payments
         pending_payments = SubscriptionPayment.objects.filter(status='PENDING')
         for p in pending_payments:
-            alerts.append({
-                'type': 'PENDING_PAYMENT',
-                'title': 'Pending UPI Verification',
-                'message': f"Business '{p.business.name}' submitted UTR: {p.upi_utr_number} for Rs. {p.amount}",
-                'key': f"pending_pay_{p.id}",
-                'badge_color': 'bg-amber-100 text-amber-700',
-                'redirect_url': '/super-admin/'
-            })
+            key = f"pending_pay_{p.id}"
+            if key not in dismissed_keys:
+                alerts.append({
+                    'type': 'PENDING_PAYMENT',
+                    'title': 'Pending UPI Verification',
+                    'message': f"Business '{p.business.name}' submitted UTR: {p.upi_utr_number} for Rs. {p.amount}",
+                    'key': key,
+                    'badge_color': 'bg-amber-100 text-amber-700',
+                    'redirect_url': '/super-admin/'
+                })
             
         # Pending demo requests
         pending_demos = DemoRequest.objects.filter(status='PENDING')
         for d in pending_demos:
-            alerts.append({
-                'type': 'PENDING_DEMO',
-                'title': 'Pending Demo Request',
-                'message': f"Business '{d.business_name}' by '{d.owner_name}' is requesting 3-day access.",
-                'key': f"pending_demo_{d.id}",
-                'badge_color': 'bg-indigo-100 text-indigo-700',
-                'redirect_url': '/super-admin/demo-requests/'
-            })
+            key = f"pending_demo_{d.id}"
+            if key not in dismissed_keys:
+                alerts.append({
+                    'type': 'PENDING_DEMO',
+                    'title': 'Pending Demo Request',
+                    'message': f"Business '{d.business_name}' by '{d.owner_name}' is requesting 3-day access.",
+                    'key': key,
+                    'badge_color': 'bg-indigo-100 text-indigo-700',
+                    'redirect_url': '/super-admin/demo-requests/'
+                })
             
         return JsonResponse({'status': 'success', 'count': len(alerts), 'alerts': alerts})
         
@@ -234,7 +240,9 @@ def api_dismiss_alert(request):
             alert_key = data.get('alert_key')
             business = get_business(request)
             if alert_key:
-                if not business and hasattr(request.user, 'profile') and request.user.profile.role == 'SUPER_ADMIN':
+                if hasattr(request.user, 'profile') and request.user.profile.role == 'SUPER_ADMIN':
+                    from .models import DismissedAlert
+                    DismissedAlert.objects.get_or_create(business=None, alert_key=alert_key)
                     return JsonResponse({'status': 'success'})
                 from .models import DismissedAlert
                 DismissedAlert.objects.get_or_create(business=business, alert_key=alert_key)
